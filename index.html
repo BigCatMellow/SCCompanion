@@ -878,6 +878,20 @@ async function importBuilderRoster(player,faction){
   render();
 }
 
+async function handleBuilderImportReturn(){
+  const params=new URLSearchParams(window.location.search||"");
+  const faction=params.get("import");
+  const player=params.get("player")==="p2"?"p2":"p1";
+  if(!faction||!BUILDER_FACTIONS[faction])return false;
+  S.viewingArmy=player;
+  await importBuilderRoster(player,faction);
+  try{
+    const cleanUrl=window.location.pathname+(window.location.hash||"");
+    window.history.replaceState({},document.title,cleanUrl);
+  }catch(e){}
+  return true;
+}
+
 function applyMissionMarkerScore(opts={}){
   const score=missionAutoScore();
   const key=missionScoreKey();
@@ -1437,7 +1451,7 @@ function bind(){
 
 loadGameState();
 saveReady=true;
-render();
+handleBuilderImportReturn().then(imported=>{if(!imported)render()});
 </script>
 </body>
 </html>

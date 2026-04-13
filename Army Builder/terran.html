@@ -2041,6 +2041,22 @@
       } catch (e) { console.error(e); }
     }
 
+
+
+    function getCompanionFactionKey() {
+      const path = window.location.pathname.toLowerCase();
+      if (path.includes('terran')) return 'terran';
+      if (path.includes('protoss')) return 'protoss';
+      return 'zerg';
+    }
+
+    function importToCompanion(player) {
+      save();
+      const targetPlayer = player === 'p2' ? 'p2' : 'p1';
+      const faction = getCompanionFactionKey();
+      window.location.href = '../index.html?import=' + encodeURIComponent(faction) + '&player=' + encodeURIComponent(targetPlayer);
+    }
+
     function load() {
       try {
         const saved = localStorage.getItem('sc-tmg-terran-v1');
@@ -2908,6 +2924,8 @@
       if (state.armyUnits.length > 0 || state.armyTactical.length > 0) {
         html += '<div class="army-actions">';
           html += '<button class="army-btn primary" onclick="showExportChoice()">Export</button>';
+        html += '<button class="army-btn" onclick="importToCompanion(\'p1\')">Import P1</button>';
+        html += '<button class="army-btn" onclick="importToCompanion(\'p2\')">Import P2</button>';
         html += '<button class="army-btn danger" onclick="showClearConfirm()">Clear</button>';
         html += '</div>';
       }
