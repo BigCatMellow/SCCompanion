@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>SC:TMG — Layout Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1118;--surface:#171d28;--surfaceAlt:#1d2531;
+  --card:#1d2531;--panel-3:#263140;--border:#344256;
+  --text:#f0eee8;--muted:#a9b0bb;--dim:#6b7a8d;
+  --accent:#d4af37;--accent-rgb:212,175,55;
+  --movement:#22c55e;--assault:#f59e0b;--combat:#ef4444;--scoring:#3b82f6;
+  --success:#22c55e;--warning:#fbbf24;--error:#ef4444;--gas:#22d3ee;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  --mono:'Inter',monospace;
+  --r:10px;--rs:6px;
+}
+html,body{background:var(--bg);color:var(--text);font-family:var(--font);-webkit-tap-highlight-color:transparent;min-height:100vh;scrollbar-width:none}
+body::-webkit-scrollbar{display:none}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── SCOREBAR (sticky) ─── */
+.scorebar{
+  position:sticky;top:0;z-index:100;
+  border-bottom:1px solid var(--border);
+  padding:calc(env(safe-area-inset-top,0px) + 6px) 12px 6px;
+  box-shadow:0 8px 20px rgba(4,8,15,.28);
+}
+/* ─── GAME STRIP (scrolls) ─── */
+.game-strip{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04)}
+.score-row1{display:flex;align-items:center;gap:10px}
+.round-block{padding:8px 16px;border-radius:var(--r);background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01)),var(--surface);border:2px solid rgba(var(--accent-rgb),.42);box-shadow:0 0 16px rgba(var(--accent-rgb),.12),inset 0 0 0 1px rgba(255,255,255,.04);text-align:center;cursor:pointer;user-select:none;transition:transform .1s,box-shadow .15s,border-color .15s;-webkit-tap-highlight-color:transparent}
+.round-block.pressing{transform:scale(.95)}
+.round-label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;font-weight:600}
+.round-value{font-size:28px;font-weight:800;font-family:var(--mono);line-height:1}
+.round-hint{font-size:8px;color:var(--muted);margin-top:3px;opacity:.9;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.phase-col{flex:1;display:flex;flex-direction:column;gap:5px}
+.phase-pills{display:flex;gap:3px;padding:3px;border-radius:100px;border:1px solid rgba(var(--accent-rgb),.28);background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.006)),rgba(13,17,24,.55);box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}
+.phase-pill{flex:1;padding:5px 0;border-radius:100px;border:1.5px solid transparent;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;transition:all .15s}
+.phase-pill.active{font-weight:700;box-shadow:inset 0 0 0 1px currentColor}
+.phase-row2{display:flex;align-items:center;gap:6px}
+.phase-name{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.phase-open-btn{flex:1;min-width:0;padding:5px 10px;border-radius:100px;border:1px solid var(--border);background:var(--surfaceAlt);font-size:11px;white-space:nowrap;text-align:left}
+.phase-open-btn .phase-name{text-decoration:none}
+.phase-open-btn{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.phase-open-tag{padding:2px 7px;border-radius:999px;background:var(--card);border:1px solid var(--border);color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.vp-row{display:flex;align-items:center;justify-content:center;gap:10px;padding:2px 0}
+.vp-block{text-align:center;min-width:66px;padding:3px 6px;border-radius:var(--r);user-select:none}
+.vp-score-hit{cursor:pointer;transition:transform .1s;padding:2px 4px;border-radius:var(--rs)}
+.vp-score-hit.pressing{transform:scale(.95)}
+.vp-label{font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:600}
+.vp-value{font-size:24px;font-weight:800;font-family:var(--mono);line-height:1.1}
+.vp-hint{font-size:7px;color:var(--dim);margin-top:2px;opacity:.5;text-transform:uppercase;letter-spacing:.08em}
+.vp-hint.score-ready{opacity:1;font-weight:800;color:var(--accent)}
+.supply-side{text-align:center;min-width:36px;padding:4px 2px;border-radius:var(--rs);opacity:.85}
+.supply-side .supply-num{display:block;font-size:1rem;font-weight:800;font-family:var(--mono);color:var(--sc);line-height:1}
+.supply-side.over .supply-num{color:#ef4444}
+.supply-side .supply-detail{display:block;font-size:0.45rem;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;font-weight:600;margin-top:2px;line-height:1.05}
+.vp-sep{display:flex;flex-direction:column;align-items:center}
+.vp-sep span:first-child{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.15em}
+.vp-sep span:last-child{font-size:11px;color:var(--dim);margin-top:2px}
+.log-open-btn{padding:8px 10px;border-radius:var(--rs);border:1px solid var(--border);background:rgba(255,255,255,.035);color:var(--muted);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.utility-left{display:flex;gap:8px;align-items:center}
+.readme-list{display:grid;gap:10px}
+.readme-item{padding:9px 10px;border-radius:var(--rs);border:1px solid rgba(255,255,255,.06);background:linear-gradient(180deg,rgba(255,255,255,.018),rgba(255,255,255,.005)),var(--surfaceAlt)}
+.readme-item strong{display:block;margin-bottom:3px;color:var(--text);font-size:12px}
+.readme-item span{display:block;color:var(--dim);font-size:11px;line-height:1.4}
+.log-list{max-height:58vh;overflow:auto;padding-right:2px}
+.log-entry{padding:9px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.log-entry-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}
+.log-round{font-size:9px;color:var(--accent);font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.log-time{font-size:9px;color:var(--dim);font-family:var(--mono)}
+.log-text{font-size:12px;line-height:1.35;color:var(--text);font-weight:600}
+.log-empty{padding:18px 0;color:var(--dim);font-size:12px;text-align:center}
+
+/* ─── TURN STRIP ─── */
+.turn-strip{padding:10px 12px 6px;border-bottom:1px solid rgba(255,255,255,.04)}
+.phase-purpose{font-size:11px;margin-bottom:8px;line-height:1.5;font-weight:500;opacity:.85}
+.action-chips{display:flex;gap:4px;margin-bottom:8px;overflow-x:auto;scrollbar-width:none}
+.action-chips::-webkit-scrollbar,.filter-chips::-webkit-scrollbar{display:none}
+.action-chip{padding:6px 12px;border-radius:100px;white-space:nowrap;border:1px solid var(--border);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;flex-shrink:0;transition:all .15s}
+.action-chip.active{font-weight:700;box-shadow:inset 0 0 0 1px currentColor}
+.action-select-wrap{position:relative;margin-bottom:8px}
+.action-select{width:100%;padding:9px 34px 9px 12px;border-radius:var(--rs);border:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.005)),var(--surfaceAlt);color:var(--text);font-size:12px;font-weight:700;letter-spacing:.02em;appearance:none;-webkit-appearance:none;text-transform:uppercase}
+.action-select option{background:var(--surface);color:var(--text)}
+.action-select-wrap::after{content:"▼";position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--dim);font-size:10px;pointer-events:none}
+.action-info{padding:4px 2px 8px;margin-bottom:4px}
+.action-title{font-size:12px;font-weight:600}
+.action-when{font-size:10px;color:var(--dim);font-weight:500;margin-top:2px;line-height:1.35}
+.action-steps{padding:0 0 8px;animation:fadeIn .15s ease}
+.step-row{display:flex;gap:8px;padding:5px 0;font-size:12px;font-weight:500}
+.step-num{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:var(--mono);flex-shrink:0}
+.resolve-row{display:flex;gap:6px;margin-bottom:6px}
+.resolve-btn{flex:2;padding:10px;border-radius:var(--rs);color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.pass-btn{flex:1;padding:10px;border-radius:var(--rs);background:var(--surfaceAlt);border:1px solid var(--border);color:var(--muted);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.02em}
+.pass-btn.done{color:var(--dim);opacity:.4}
+.pass-state{display:flex;gap:12px;justify-content:center;padding-bottom:2px}
+.pass-state span{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+
+/* ─── MISSION PANEL ─── */
+.mission-panel{padding:0 12px 6px;border-bottom:1px solid rgba(255,255,255,.04)}
+.mission-header{display:flex;align-items:center;gap:8px;padding:10px 0;cursor:pointer;user-select:none}
+.mission-header-info{flex:1}
+.mission-title{font-size:12px;font-weight:600}
+.mission-sub{font-size:10px;color:var(--dim);font-weight:500}
+.mission-chevron{color:var(--dim);font-size:10px;transition:transform .2s}
+.mission-chevron.open{transform:rotate(180deg)}
+.mission-body{animation:fadeIn .12s ease;padding-bottom:8px}
+.scale-chips{display:flex;gap:4px;margin-bottom:10px}
+.scale-chip{flex:1;padding:8px 0;border-radius:var(--rs);border:1.5px solid transparent;font-size:11px;font-weight:600;text-align:center;transition:all .15s;background:var(--surfaceAlt)}
+.scale-chip.active{font-weight:700}
+.mission-selects{display:flex;gap:6px;margin-bottom:8px}
+.mission-select{flex:1;padding:8px 10px;border-radius:var(--rs);background:var(--panel-3);border:1px solid var(--border);color:var(--text);font-size:11px;font-weight:500;font-family:var(--font);appearance:none;-webkit-appearance:none}
+.mission-select option{background:var(--card);color:var(--text)}
+.mission-stat-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.mission-stat{padding:5px 12px;border-radius:100px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.02em}
+.supply-board{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04)}
+.supply-card{border-radius:var(--r);border:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.005)),var(--card);padding:8px}
+.supply-card.over{border-color:#8b4049;background:rgba(139,64,73,.12)}
+.supply-top{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px}
+.supply-name{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.supply-value{font-family:var(--mono);font-size:18px;font-weight:700}
+.supply-label{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+.supply-meter{height:4px;border-radius:999px;background:#25262d;overflow:hidden}
+.supply-fill{height:100%;border-radius:inherit}
+.supply-note{margin-top:5px;color:var(--dim);font-size:9px;line-height:1.3}
+.sides-row{display:flex;gap:6px;align-items:center;margin-bottom:10px}
+.sides-label{font-size:10px;color:var(--dim);flex:1}
+.side-chip{padding:3px 10px;border-radius:12px;font-size:11px;font-weight:500}
+.swap-btn{padding:3px 10px;border-radius:12px;border:1px solid var(--border);font-size:10px;color:var(--muted)}
+.marker-grid{display:flex;gap:4px;flex-wrap:wrap}
+.marker-chip{padding:8px 10px;border-radius:var(--rs);border:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.005)),var(--surfaceAlt);text-align:center;flex:1;min-width:55px;cursor:pointer;transition:all .15s}
+.marker-chip.active{border-color:rgba(var(--accent-rgb),.5);box-shadow:0 0 8px rgba(var(--accent-rgb),.12)}
+.marker-num{font-size:12px;font-weight:700;font-family:var(--mono)}
+.marker-owner{font-size:9px;color:var(--dim);font-weight:500}
+.marker-supply{font-size:9px;color:var(--dim);font-family:var(--mono);font-weight:600}
+.marker-editor{animation:fadeIn .12s ease;padding:8px 0}
+.marker-edit-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.marker-edit-title{font-size:13px;font-weight:600}
+.marker-active-btn{padding:4px 12px;border-radius:14px;border:1.5px solid var(--border);font-size:11px;transition:all .15s}
+.marker-active-btn.on{border-color:rgba(var(--accent-rgb),.5);color:var(--accent);background:rgba(var(--accent-rgb),.12)}
+.marker-control-board{display:grid;grid-template-columns:1fr minmax(76px,.8fr) 1fr;align-items:stretch;gap:6px;margin-top:8px}
+.marker-control-side,.marker-control-center{min-height:48px;border-radius:var(--rs);border:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.005)),var(--surfaceAlt);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;transition:transform .1s,border-color .15s,background .15s,box-shadow .15s}
+.marker-control-side{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.05em}
+.marker-control-side small,.marker-control-center small{margin-top:2px;color:var(--dim);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.marker-control-center{font-family:var(--mono);font-size:18px;font-weight:900}
+.marker-control-side.active{box-shadow:inset 0 0 0 1px currentColor}
+.marker-control-side:active,.marker-control-center:active{transform:scale(.97)}
+.marker-home-row{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:8px}
+.marker-home-btn{padding:6px 4px;border-radius:var(--rs);border:1px solid var(--border);background:var(--surfaceAlt);color:var(--dim);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.marker-home-btn.active{box-shadow:inset 0 0 0 1px currentColor}
+.marker-supply-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.marker-supply-row .player-lbl{font-size:11px;flex:1}
+.marker-supply-row .supply-val{font-size:14px;font-weight:600;font-family:var(--mono);width:24px;text-align:center}
+.marker-supply-counter{min-width:58px;padding:5px 9px;border-radius:var(--rs);border:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.005)),var(--surfaceAlt);text-align:center;user-select:none;transition:transform .1s}
+.marker-supply-counter.pressing{transform:scale(.96)}
+.marker-supply-counter .supply-val{display:block;width:auto;font-size:16px;font-weight:800;font-family:var(--mono)}
+.marker-supply-counter .model-hint{display:block;margin-top:2px;color:var(--dim);font-size:8px;font-family:var(--font);text-transform:uppercase;letter-spacing:.04em}
+.marker-owner-btns{display:flex;gap:4px;margin-top:8px}
+.marker-owner-btn{flex:1;padding:5px 0;border-radius:var(--rs);border:1px solid var(--border);font-size:10px;transition:all .15s}
+.marker-owner-btn.active{font-weight:600}
+
+/* ─── ARMY SECTION ─── */
+.army-section{padding:10px 12px 12px}
+.army-toggle{display:flex;margin-bottom:10px;border-radius:12px;border:1px solid var(--border);overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.army-toggle button{flex:1;padding:11px 0;background:var(--surfaceAlt);font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;transition:all .15s;border-bottom:2px solid transparent}
+.army-toggle button.active{font-weight:700}
+.builder-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 12px;padding:8px 10px;border-radius:var(--r);background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.005)),var(--surfaceAlt);border:1px solid var(--border)}
+.builder-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:7px}
+.builder-title{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;font-family:var(--mono);font-weight:700}
+.builder-summary{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500}
+.builder-open-btn{padding:5px 10px;border-radius:100px;border:1px solid var(--border);background:var(--card);color:var(--accent);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.builder-links{display:flex;gap:4px}
+.builder-links a{padding:4px 8px;border-radius:100px;border:1px solid var(--border);color:var(--muted);font-size:10px;text-decoration:none;font-weight:600}
+.builder-imports{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.builder-imports button{padding:6px 4px;border-radius:var(--rs);border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:10px;font-weight:600}
+.builder-imports button.ready{color:var(--accent);border-color:rgba(var(--accent-rgb),.45);background:rgba(var(--accent-rgb),.08)}
+.builder-imports button:disabled{opacity:.45}
+.builder-status{margin-top:6px;color:var(--dim);font-size:10px;line-height:1.35}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.68);z-index:190}
+.modal-panel{position:fixed;left:12px;right:12px;top:50%;transform:translateY(-50%);z-index:200;max-width:406px;margin:0 auto;padding:12px;border-radius:var(--r);background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.005)),var(--surface);border:1px solid var(--border);box-shadow:0 18px 60px rgba(0,0,0,.45)}
+.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.modal-title{font-size:15px;font-weight:700}
+.modal-sub{margin-top:2px;color:var(--dim);font-size:11px;line-height:1.35}
+.modal-close{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:var(--surfaceAlt);color:var(--muted);font-size:18px;line-height:1}
+.filter-chips{display:flex;gap:4px;margin-bottom:8px}
+.filter-chip{flex:1;padding:6px 4px;border-radius:100px;white-space:nowrap;border:1px solid var(--border);font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.02em;transition:all .15s;text-align:center}
+.filter-chip.active{font-weight:700;box-shadow:inset 0 0 0 1px currentColor}
+.empty-msg{padding:20px 0;text-align:center;color:var(--dim);font-size:12px}
+
+/* ─── ROLE COLORS ─── */
+.unit-card{
+  border-radius:12px;border:1px solid var(--border);border-left:4px solid var(--border);
+  margin-bottom:8px;transition:opacity .2s,transform .16s,box-shadow .16s;
+  background:
+    radial-gradient(circle at top right,rgba(var(--unit-color-rgb,var(--accent-rgb)),.10),transparent 34%),
+    linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.01)),var(--surface);
+  box-shadow:0 2px 8px rgba(0,0,0,.2);overflow:hidden;
+}
+.unit-card.role-hero{border-left-color:#f59e0b}
+.unit-card.role-elite{border-left-color:#a855f7}
+.unit-card.role-core{border-left-color:#3b82f6}
+.unit-card.role-support{border-left-color:#22c55e}
+.unit-card.role-specialist{border-left-color:#ec4899}
+.unit-card.dead{background:var(--bg);border-color:rgba(255,255,255,.04);border-left-color:rgba(255,255,255,.06);opacity:.4;box-shadow:none}
+.unit-row{display:grid;grid-template-columns:10px minmax(0,1fr) 12px;grid-template-areas:"dot main chev" ". controls controls";align-items:center;gap:8px 10px;padding:12px 14px;cursor:pointer;user-select:none}
+.loc-dot{grid-area:dot;width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.unit-main{grid-area:main;min-width:0;display:flex;align-items:baseline;gap:6px}
+.unit-name{min-width:0;font-size:0.95rem;font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+.unit-name.dead{color:var(--dim);text-decoration:line-through}
+.unit-meta{flex:0 0 auto;color:var(--muted);font-size:0.75rem;font-weight:500}
+.unit-controls{grid-area:controls;display:grid;grid-template-columns:minmax(54px,.9fr) minmax(40px,.7fr) minmax(40px,.7fr) minmax(48px,.8fr);align-items:center;gap:6px;min-width:0}
+.toggle-chip{width:100%;min-height:28px;padding:4px 0;border-radius:100px;border:1.5px solid transparent;font-size:0.6rem;font-weight:600;text-transform:uppercase;letter-spacing:.02em;transition:all .15s;text-align:center}
+.toggle-chip.on{font-weight:700;box-shadow:inset 0 0 0 1px currentColor}
+.location-chip{width:100%;min-height:26px;padding:3px 0;border-radius:100px;border:1px solid var(--border);font-size:0.58rem;font-weight:650;white-space:nowrap;text-align:center;text-transform:uppercase;letter-spacing:.01em}
+.model-badge{position:relative;width:100%;min-height:28px;padding:3px 4px;border-radius:var(--rs);border:1px solid transparent;font-size:0.72rem;font-family:var(--mono);font-weight:700;text-align:center;display:flex;align-items:center;justify-content:center;line-height:1;cursor:pointer;user-select:none;transition:transform .1s,border-color .15s,background .15s}
+.model-badge.pressing{transform:scale(.96)}
+.model-badge small{position:absolute;left:5px;top:50%;transform:translateY(-50%);font-family:var(--font);font-size:0.46rem;font-weight:800;letter-spacing:.02em;text-transform:uppercase;opacity:.68}
+.unit-chevron{grid-area:chev;color:var(--muted);font-size:14px;transition:transform .2s;flex-shrink:0}
+.unit-chevron.open{transform:rotate(90deg)}
+.unit-expand{border-top:1px solid var(--border);padding:12px 14px 14px;animation:revealBlock .2s ease}
+@keyframes revealBlock{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+/* Stats Grid — matches builder */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(48px,1fr));gap:4px;margin:12px 0}
+.stat-chip{
+  background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01)),var(--panel-3);
+  border-radius:6px;padding:6px 4px;text-align:center;
+}
+.stat-label{display:block;font-size:0.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:2px;font-weight:600}
+.stat-val{font-size:0.8rem;font-weight:600;color:var(--text)}
+
+/* Weapon Table — matches builder */
+.weapon-table{
+  background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01)),var(--panel-3);
+  border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:8px;
+}
+.weapon-table:last-child{margin-bottom:0}
+.weapon-table-header{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--border)}
+.weapon-table-name{font-size:0.85rem;font-weight:600}
+.weapon-table-phase{font-size:0.65rem;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.05);color:var(--muted);text-transform:uppercase}
+.weapon-table-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(50px,1fr))}
+.weapon-table-cell{padding:6px 8px;text-align:center;border-right:1px solid var(--border)}
+.weapon-table-cell:last-child{border-right:none}
+.weapon-table-cell span{display:block;font-size:0.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:2px}
+.weapon-table-cell strong{font-size:0.8rem;font-weight:600}
+.weapon-table-kw{padding:6px 12px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:4px}
+.weapon-table-kw .kw-chip{margin:0}
+
+/* Ability Block — matches builder */
+.ability-block{
+  background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01)),var(--panel-3);
+  border:1px solid var(--border);border-radius:8px;margin-bottom:8px;overflow:hidden;
+}
+.ability-block:last-child{margin-bottom:0}
+.ability-header{padding:8px 12px 4px}
+.ability-title{font-size:0.88rem;font-weight:600;color:var(--warning)}
+.ability-phase-tag{font-size:0.6rem;padding:2px 6px;border-radius:4px;background:rgba(255,255,255,.05);color:var(--muted);text-transform:uppercase;margin-left:6px}
+.ability-body{padding:4px 12px 8px;font-size:0.8rem;color:var(--muted);line-height:1.5}
+
+.sec-label{font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:6px}
+.kw-chip{padding:3px 8px;border-radius:4px;background:rgba(var(--accent-rgb),.15);color:var(--accent);font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;display:inline-block;margin:0 4px 4px 0}
+.model-counter{min-width:72px;padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.005)),var(--surfaceAlt);text-align:center;user-select:none;transition:transform .1s;cursor:pointer}
+.model-counter.pressing{transform:scale(.96)}
+.model-counter .model-val{display:block;width:auto;color:var(--text);font-size:0.95rem;font-weight:700}
+.model-counter .model-hint{display:block;margin-top:2px;color:var(--dim);font-size:0.55rem;font-family:var(--font);text-transform:uppercase;letter-spacing:.06em}
+.step-btn{width:28px;height:28px;border-radius:var(--rs);border:1px solid var(--border);background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.01)),var(--panel-3);color:var(--muted);font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.model-val{font-size:0.95rem;font-weight:700;font-family:var(--mono);width:24px;text-align:center}
+.loc-btns{display:flex;gap:4px;margin-top:12px}
+.loc-btn{flex:1;padding:7px 0;border-radius:var(--rs);border:1px solid var(--border);font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:.02em;transition:all .15s}
+.loc-btn.active{font-weight:700;box-shadow:inset 0 0 0 1px currentColor}
+
+/* ─── RULES TAB ─── */
+.rules-tab{padding:12px}
+.search-wrap{position:relative;margin-bottom:12px}
+.search-input{width:100%;padding:10px 14px;border-radius:var(--r);background:var(--card);border:1px solid var(--border);color:var(--text);font-size:13px;font-weight:500;outline:none}
+.search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--dim);font-size:16px}
+.saved-chips{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px}
+.saved-chip{padding:5px 10px;border-radius:var(--r);background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.005)),var(--card);border:1px solid var(--border);font-size:11px;text-align:left}
+.saved-chip strong{display:block;font-weight:500}
+.saved-chip small{font-size:9px;color:var(--dim)}
+.lib-row{display:flex;align-items:center;justify-content:space-between;width:100%;padding:9px 11px;margin-bottom:3px;background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.005)),var(--card);border-radius:var(--r);border:1px solid var(--border);text-align:left}
+.lib-kicker{font-size:9px;color:var(--dim)}
+.lib-title{font-size:12px;font-weight:500}
+.lib-count{font-size:10px;color:var(--dim);font-family:var(--mono)}
+
+/* ─── BOTTOM NAV ─── */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;display:flex;background:linear-gradient(180deg,rgba(23,29,40,.94),rgba(13,17,24,.98));backdrop-filter:blur(10px);border-top:1px solid var(--border);padding:6px 0 env(safe-area-inset-bottom,8px);z-index:100}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0}
+.nav-icon{font-size:15px}
+.nav-label{font-size:10px;font-weight:400}
+.nav-btn.active .nav-label{font-weight:700}
+
+.app-shell{max-width:430px;margin:0 auto;min-height:100vh}
+.tab-content{padding-bottom:56px}
+.danger-zone{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:14px 12px 74px}
+.reset-game-btn{width:25%;min-width:92px;padding:8px 10px;border-radius:var(--rs);border:1.5px solid #8b4049;background:rgba(139,64,73,.12);color:#ff8b96;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;box-shadow:inset 0 0 0 1px rgba(255,139,150,.08)}
+</style>
+</head>
+<body>
+<div class="app-shell" id="app"></div>
+<script src="Army%20Builder/runtime/payloads/mission-setup.js"></script>
+<script>
+const PHASES=[
+  {n:"I",name:"Movement",color:"#4a8c6a",purpose:"Deploy, reposition, disengage, and set up the next phase."},
+  {n:"II",name:"Assault",color:"#c96a4a",purpose:"Deal damage with ranged attacks, run for position, or charge into engagement."},
+  {n:"III",name:"Combat",color:"#8b4a5e",purpose:"Resolve obligatory melee between engaged ground units."},
+  {n:"IV",name:"Scoring",color:"#5a7a9a",purpose:"Determine marker control, score the round, clean up, and set initiative."},
+];
+const ACTIONS={
+  0:[
+    {title:"Hold",ref:"8.5.1",when:"Movement Phase, when the unit is eligible to activate",how:["Do nothing","Set the unit's activation marker"]},
+    {title:"Move",ref:"8.5.2-8.5.3",when:"Movement Phase, when the unit is unengaged and activated",how:["Choose a leading model and move it up to Speed","Apply movement restrictions for bases, terrain, gaps, and elevation","Set the rest of the unit back into coherency"]},
+    {title:"Disengage",ref:"8.5.4",when:"Movement Phase, when the unit begins engaged",how:["Move using the standard movement procedure","Each model must finish outside enemy engagement range","Models that fail to clear are removed"]},
+    {title:"Deploy",ref:"8.5.5",when:"Movement Phase, if the unit fits within available supply",how:["Confirm current supply fits within available supply","Set the leading model at the entry edge, then move up to Speed","Set the rest of the unit in coherency"]}
+  ],
+  1:[
+    {title:"Run",ref:"8.7.1",when:"Assault Phase, when the unit is unengaged and activated",how:["Use the same standard movement procedure as a Move","Nominate a leading model, move it up to Speed, then rebuild coherency","Do not end within engagement range of enemy units"]},
+    {title:"Hold",ref:"8.7.2",when:"Assault Phase, when the unit is eligible to activate",how:["Do nothing","Set the activation marker to show the unit has acted in Assault"]},
+    {title:"Ranged Attack",ref:"8.7.3-8.7.6",when:"Assault Phase, when the unit has a valid target and weapon profile",how:["Check visibility, range, target tag, and engagement status","Assign weapons into legal batches","Resolve each batch through Attack Pool, Armour Pool, then Damage Pool"]},
+    {title:"Charge",ref:"8.7.7",when:"Assault Phase, after declaring targets and rolling charge distance",how:["Declare all intended target units first","Roll 1D6 and add the result to the unit's Speed","Move the leading model into legal engagement range, then rebuild coherency"]}
+  ],
+  2:[
+    {title:"Close Combat Attack",ref:"8.8.1",when:"Combat Phase, when the engaged ground unit is activated",how:["Optionally Close Ranks up to 3 inches","Set models base-to-base where possible","Resolve melee attacks against enemy units the unit is engaged with"]}
+  ],
+  3:[
+    {title:"Determine Mission Marker Control",ref:"8.9.1",when:"Start of the Scoring & Cleanup Phase",how:["Check which units can contest each marker","Sum current supply of contesting units for each player","Higher total controls the marker"]},
+    {title:"Score Victory Points",ref:"8.9.2",when:"After marker control is determined",how:["Apply the mission card's scoring conditions simultaneously"]},
+    {title:"End of Game Check",ref:"8.9.3",when:"Immediately after victory points are scored",how:["Follow the mission card's end-of-game condition before cleanup"]},
+    {title:"Cleanup & Refresh",ref:"8.9.4-8.9.5",when:"After the end-of-game check",how:["Resolve end-of-round effects","Remove tokens and markers except stay-in-play exceptions","Refresh exhausted cards and clear activation state"]},
+    {title:"Determine Initiative",ref:"8.9.6",when:"End of the Scoring & Cleanup Phase",how:["The player with fewer victory points takes the first player marker","If tied, conduct a roll-off"]}
+  ],
+};
+const UNITS_P1=[
+  {key:"stalker-0",name:"Stalker",role:"Elite",tier:"T2",supply:2,models:{current:2,max:2},stats:{speed:"4/8",armour:"4+",hp:6},location:"reserves",engaged:false,activated:false,weapons:[{name:"Particle Disruptors",range:'12"',hit:"4+",dmg:2},{name:"Stomp",range:"Melee",hit:"5+",dmg:1}],abilities:[{name:"Blink",desc:'Teleport up to 8" ignoring terrain'}],keywords:["Squadron","Passive"]},
+  {key:"zealot-0",name:"Zealot",role:"Core",tier:"T1",supply:1,models:{current:6,max:6},stats:{speed:"5",armour:"4+",hp:3},location:"reserves",engaged:false,activated:false,weapons:[{name:"Psi Blades",range:"Melee",hit:"3+",dmg:2}],abilities:[{name:"Charge",desc:'+2" on assault moves'}],keywords:["Squadron"]},
+  {key:"colossus-0",name:"Colossus",role:"Specialist",tier:"T3",supply:4,models:{current:1,max:1},stats:{speed:"4",armour:"3+",hp:10},location:"reserves",engaged:false,activated:false,weapons:[{name:"Thermal Lances",range:'14"',hit:"3+",dmg:4}],abilities:[{name:"Cliff Walk",desc:"Ignores terrain height"}],keywords:["Massive","Detector"]},
+  {key:"sentry-0",name:"Sentry",role:"Support",tier:"T1",supply:1,models:{current:3,max:3},stats:{speed:"4",armour:"5+",hp:4},location:"reserves",engaged:false,activated:false,weapons:[{name:"Disruption Beam",range:'10"',hit:"4+",dmg:1}],abilities:[{name:"Guardian Shield",desc:'+1 Armour within 4"'},{name:"Force Field",desc:"Place impassable marker"}],keywords:["Psionic"]},
+  {key:"immortal-0",name:"Immortal",role:"Elite",tier:"T2",supply:3,models:{current:2,max:2},stats:{speed:"3",armour:"2+",hp:8},location:"reserves",engaged:false,activated:false,weapons:[{name:"Phase Disruptors",range:'12"',hit:"3+",dmg:3}],abilities:[{name:"Hardened Shield",desc:"Max 2 damage per hit"}],keywords:["Armored"]},
+  {key:"dt-0",name:"Dark Templar",role:"Elite",tier:"T2",supply:2,models:{current:2,max:2},stats:{speed:"6",armour:"5+",hp:4},location:"reserves",engaged:false,activated:false,weapons:[{name:"Warp Blade",range:"Melee",hit:"3+",dmg:3}],abilities:[{name:"Permanently Cloaked",desc:"Cannot be targeted unless detected"}],keywords:["Stealth"]},
+];
+const UNITS_P2=[
+  {key:"zergling-0",name:"Zergling",role:"Core",tier:"T1",supply:1,models:{current:6,max:6},stats:{speed:"7",armour:"6+",hp:1},location:"reserves",engaged:false,activated:false,weapons:[{name:"Claws",range:"Melee",hit:"4+",dmg:1}],abilities:[{name:"Swarm",desc:"Re-roll 1s to hit in melee when 4+ models"}],keywords:["Squadron","Swarm"]},
+  {key:"hydra-0",name:"Hydralisk",role:"Core",tier:"T1",supply:2,models:{current:4,max:4},stats:{speed:"4",armour:"5+",hp:3},location:"reserves",engaged:false,activated:false,weapons:[{name:"Needle Spines",range:'12"',hit:"4+",dmg:2},{name:"Scything Claws",range:"Melee",hit:"5+",dmg:1}],abilities:[],keywords:["Squadron"]},
+  {key:"roach-0",name:"Roach",role:"Core",tier:"T1",supply:1,models:{current:3,max:3},stats:{speed:"4",armour:"4+",hp:4},location:"reserves",engaged:false,activated:false,weapons:[{name:"Acid Saliva",range:'8"',hit:"4+",dmg:2}],abilities:[{name:"Regenerate",desc:"Recover 1 HP at start of activation"}],keywords:["Armored"]},
+  {key:"ultra-0",name:"Ultralisk",role:"Specialist",tier:"T3",supply:4,models:{current:1,max:1},stats:{speed:"5",armour:"2+",hp:12},location:"reserves",engaged:false,activated:false,weapons:[{name:"Kaiser Blades",range:"Melee",hit:"3+",dmg:4}],abilities:[{name:"Frenzied",desc:"Cannot be locked in engagement"}],keywords:["Massive"]},
+];
+const LOC={reserves:{label:"Reserves",color:"#7b93a8"},battlefield:{label:"On Board",color:"#c9a84c"},destroyed:{label:"Destroyed",color:"#8b4049"}};
+const BUILDER_FACTIONS={
+  zerg:{label:"Zerg",key:"sc-tmg-zerg-v4",href:"Army%20Builder/zerg.html",payload:"Army%20Builder/runtime/payloads/zerg.js",color:"#9333ea"},
+  terran:{label:"Terran",key:"sc-tmg-terran-v1",href:"Army%20Builder/terran.html",payload:"Army%20Builder/runtime/payloads/terran.js",color:"#3b82f6"},
+  protoss:{label:"Protoss",key:"sc-tmg-protoss-v1",href:"Army%20Builder/protoss.html",payload:"Army%20Builder/runtime/payloads/protoss.js",color:"#d4af37"}
+};
+function emptyArmy(id){return {label:id.toUpperCase(),color:"#7b93a8",units:[]}}
+const ARMIES={p1:emptyArmy("p1"),p2:emptyArmy("p2")};
+
+const MISSION_SETUP=window.__missionSetupData||{missions:[],maps:[]};
+const SCALES=[{id:"skirmish",name:"Skirmish",table:'36"×36"'},{id:"standard",name:"Standard",table:'36"×54"'},{id:"grand",name:"Grand",table:'36"×72"'}];
+const MISSIONS=(MISSION_SETUP.missions||[]).map(m=>({...m,params:m.parameters||m.params||[]}));
+const MAPS=MISSION_SETUP.maps||[];
+
+function newGameState(){
+  return {tab:"play",round:1,phase:0,vp:{p1:0,p2:0},activePlayer:"p1",firstPlayer:"p1",passed:{p1:false,p2:false},selAction:0,showSteps:false,viewingArmy:"p1",armyFilter:"all",expanded:{},search:"",
+    mission:{scaleId:"standard",missionId:"",mapId:"",sides:{p1:"blue",p2:"red"},markers:{},open:false,editMarker:null},
+    log:[],
+    roundStates:{},
+    scoredMarkersByRound:{},
+    builderMsg:"",
+    builderModal:false,
+    missionModal:false,
+    logModal:false,
+    readmeModal:false,
+    turnModal:false,
+    supplyMsg:""
+  };
+}
+const S=newGameState();
+const GAME_SAVE_KEY="sc-tmg-companion-game-v1";
+const DEFAULT_MISSION=JSON.parse(JSON.stringify(S.mission));
+let saveReady=false;
+
+function saveGameState(){
+  if(!saveReady)return;
+  try{
+    const state={...S,builderModal:false,missionModal:false,logModal:false,readmeModal:false,turnModal:false,supplyMsg:""};
+    localStorage.setItem(GAME_SAVE_KEY,JSON.stringify({state,armies:{p1:ARMIES.p1,p2:ARMIES.p2}}));
+  }catch(e){}
+}
+function loadGameState(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(GAME_SAVE_KEY)||"null");
+    if(!saved||!saved.state)return;
+    const st=saved.state;
+    Object.assign(S,st);
+    S.vp={p1:0,p2:0,...(st.vp||{})};
+    S.passed={p1:false,p2:false,...(st.passed||{})};
+    S.expanded=st.expanded||{};
+    S.log=Array.isArray(st.log)?st.log:[];
+    S.roundStates=st.roundStates||{};
+    S.scoredMarkersByRound=st.scoredMarkersByRound||{};
+    S.mission={
+      ...DEFAULT_MISSION,
+      ...(st.mission||{}),
+      sides:{...DEFAULT_MISSION.sides,...((st.mission||{}).sides||{})},
+      markers:(st.mission||{}).markers||{}
+    };
+    S.builderModal=false;
+    S.missionModal=false;
+    S.logModal=false;
+    S.readmeModal=false;
+    S.turnModal=false;
+    S.supplyMsg="";
+    ["p1","p2"].forEach(id=>{
+      const army=saved.armies?.[id];
+      if(army&&Array.isArray(army.units))ARMIES[id]=army;
+    });
+  }catch(e){}
+}
+function resetGameState(){
+  if(!confirm("Reset this game and clear the saved companion state?"))return;
+  try{localStorage.removeItem(GAME_SAVE_KEY)}catch(e){}
+  Object.assign(S,newGameState());
+  ARMIES.p1=emptyArmy("p1");
+  ARMIES.p2=emptyArmy("p2");
+  saveReady=true;
+  render();
+}
+function addLog(text){
+  S.log=S.log||[];
+  S.log.unshift({id:Date.now()+Math.random(),round:S.round,phase:PHASES[S.phase]?.name||"",text,ts:new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"})});
+  if(S.log.length>500)S.log.length=500;
+}
+function eachUnit(fn){
+  ["p1","p2"].forEach(player=>(ARMIES[player]?.units||[]).forEach(u=>fn(u,player)));
+}
+function saveRoundActivationState(round=S.round){
+  S.roundStates=S.roundStates||{};
+  const units={};
+  eachUnit(u=>{units[u.key]={activated:!!u.activated}});
+  S.roundStates[round]={units};
+}
+function restoreRoundActivationState(round){
+  const saved=S.roundStates?.[round]?.units;
+  eachUnit(u=>{u.activated=saved?.[u.key]?.activated||false});
+}
+function setRound(next){
+  const round=Math.max(1,Math.min(5,Number(next)||1));
+  if(S.round===round)return render();
+  const previous=S.round;
+  if(round>previous)applyMissionMarkerScore({silentNoScore:true,autoAdvance:true});
+  saveRoundActivationState(previous);
+  S.round=round;
+  restoreRoundActivationState(round);
+  S.passed={p1:false,p2:false};
+  addLog(`Round changed from ${previous} to ${round}.`);
+  render();
+}
+
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+function hexToRgb(hex){
+  const clean=String(hex||"#d4af37").replace("#","");
+  const full=clean.length===3?clean.split("").map(c=>c+c).join(""):clean.padEnd(6,"0").slice(0,6);
+  return [0,2,4].map(i=>parseInt(full.slice(i,i+2),16)||0);
+}
+function colorRgb(color){return hexToRgb(color).join(",")}
+function alpha(color,value){return `rgba(${colorRgb(color)},${value})`}
+function setThemeGlow(){
+  const p1=ARMIES.p1?.color||"#d4af37";
+  const p2=ARMIES.p2?.color||"#9333ea";
+  const active=ARMIES[S.activePlayer]?.color||p1;
+  const p1Rgb=colorRgb(p1),p2Rgb=colorRgb(p2),activeRgb=colorRgb(active);
+  document.documentElement.style.setProperty("--accent",active);
+  document.documentElement.style.setProperty("--accent-rgb",activeRgb);
+  document.body.style.background=`
+    radial-gradient(circle at 14% 0%,rgba(${p1Rgb},.10),transparent 32%),
+    radial-gradient(circle at 86% 0%,rgba(${p2Rgb},.10),transparent 32%),
+    linear-gradient(180deg,#111722 0%,#0d1118 28%,#0a0e15 100%)`;
+  return {p1Rgb,p2Rgb,activeRgb};
+}
+
+function units(){return ARMIES[S.viewingArmy]?.units||[]}
+function filtered(){return S.armyFilter==="all"?units():units().filter(u=>u.location===S.armyFilter)}
+function phaseColor(){return PHASES[S.phase].color}
+function selScale(){return SCALES.find(s=>s.id===S.mission.scaleId)||SCALES[1]}
+function scaleType(){return selScale().id==="skirmish"?"Skirmish":"Standard"}
+function selMission(){return MISSIONS.find(m=>m.id===S.mission.missionId)||null}
+function selMap(){return MAPS.find(m=>m.id===S.mission.mapId)||null}
+function activeMarkers(){const m=selMap();return m?.markers||[]}
+function supplyCap(){const m=selMission();if(!m)return Infinity;return Number(m.supply||0)+Math.max(0,S.round-1)*Number(m.perRound||0)}
+function supplyLabel(v){return Number.isFinite(v)?String(v):"—"}
+function unitSupplyTiers(u){return (u.supplyTiers&&u.supplyTiers.length)?u.supplyTiers:supplyTiersFrom(u.rawUnit)}
+function effectiveSupply(u){
+  if(!u||u.location==="destroyed"||Number(u.models?.current||0)<=0)return 0;
+  const tiers=unitSupplyTiers(u);
+  const count=Number(u.models?.current||0);
+  const band=tiers.find(t=>count>=t.min&&count<=t.max);
+  return band?Number(band.supply||0):Number(u.supply||0);
+}
+function armySupply(player){
+  const army=ARMIES[player]||{units:[]};
+  const cap=supplyCap();
+  const board=army.units.filter(u=>u.location==="battlefield").reduce((sum,u)=>sum+effectiveSupply(u),0);
+  const available=Number.isFinite(cap)?Math.max(0,cap-board):Infinity;
+  return {army,cap,board,available,over:Number.isFinite(cap)&&board>cap};
+}
+function builderBarHtml(){
+  return `<div class="builder-bar">
+    <div style="min-width:0">
+      <div class="builder-title">Army Builder</div>
+      <div class="builder-summary">${Object.entries(BUILDER_FACTIONS).map(([key,info])=>`${info.label} ${builderRosterCount(key)}`).join(" · ")}</div>
+    </div>
+    <button class="builder-open-btn" data-open-builder>Open</button>
+  </div>`;
+}
+function logModalHtml(){
+  if(!S.logModal)return "";
+  const rows=(S.log||[]).map(e=>`<div class="log-entry">
+    <div class="log-entry-head">
+      <span class="log-round">Round ${e.round} · ${esc(e.phase||"")}</span>
+      <span class="log-time">${esc(e.ts||"")}</span>
+    </div>
+    <div class="log-text">${esc(e.text)}</div>
+  </div>`).join("");
+  return `<div class="modal-backdrop" data-close-log></div>
+  <div class="modal-panel">
+    <div class="modal-head">
+      <div><div class="modal-title">Game Log</div><div class="modal-sub">Newest events are shown first.</div></div>
+      <button class="modal-close" data-close-log>×</button>
+    </div>
+    <div class="log-list">${rows||`<div class="log-empty">No events logged yet.</div>`}</div>
+  </div>`;
+}
+function readmeModalHtml(){
+  if(!S.readmeModal)return "";
+  const items=[
+    ["Start a game","Use Setup to choose the scale, mission, map, and deployment sides. Leave them blank until you are ready."],
+    ["Import armies","Open Army Builder, save rosters there, then use the Army Builder import panel here for P1 and P2."],
+    ["Track supply","Available supply counts down as units move onto the board. Units start in reserves and cannot deploy if they exceed available supply."],
+    ["Manage units","Tap a unit to expand it. Use the location pill or location buttons to move it between reserves, board, and destroyed. Tap model count to increase; hold to steadily decrease with vibration feedback."],
+    ["Use mission markers","Tap a marker to set each side's supply on it. The marker color changes to the faction with the higher supply."],
+    ["Run phases","Tap the phase strip to open the phase guide. Pick the action from the dropdown, follow the displayed steps, then Resolve or Pass."],
+    ["Review the log","The Log records major changes like VP, rounds, phases, roster imports, unit movement, model counts, and marker supply."],
+    ["Start over","Reset Game is intentionally separated at the bottom-right. It clears the saved companion state after confirmation."]
+  ];
+  return `<div class="modal-backdrop" data-close-readme></div>
+  <div class="modal-panel">
+    <div class="modal-head">
+      <div><div class="modal-title">Read Me</div><div class="modal-sub">A quick guide for using the companion during a game.</div></div>
+      <button class="modal-close" data-close-readme>×</button>
+    </div>
+    <div class="readme-list">${items.map(([title,body])=>`<div class="readme-item"><strong>${esc(title)}</strong><span>${esc(body)}</span></div>`).join("")}</div>
+  </div>`;
+}
+function markerControlLabel(r){
+  if(r.controller==="p1"||r.controller==="p2")return r.controller.toUpperCase();
+  if(r.p1Supply||r.p2Supply)return "Tied";
+  return "No supply";
+}
+function markerControlColor(r){
+  return r.controller==="p1"||r.controller==="p2"?ARMIES[r.controller].color:"var(--dim)";
+}
+function markerControlSupply(r){
+  if(r.controller==="p1"||r.controller==="p2")return r[r.controller+"Supply"];
+  return "";
+}
+function zoneCenter(z){return {x:Number(z.x||0)+Number(z.w||0)/2,y:Number(z.y||0)+Number(z.h||0)/2}}
+function nearestZoneDistance(marker,zones){
+  if(!marker||!zones?.length)return Infinity;
+  return Math.min(...zones.map(z=>{const c=zoneCenter(z);return Math.hypot(Number(marker.x||0)-c.x,Number(marker.y||0)-c.y)}));
+}
+function inferredMarkerHomeColor(marker){
+  const map=selMap();
+  if(!map||!marker)return "neutral";
+  const blue=nearestZoneDistance(marker,map.blueZones||[]);
+  const red=nearestZoneDistance(marker,map.redZones||[]);
+  if(!Number.isFinite(blue)&&!Number.isFinite(red))return "neutral";
+  const diff=Math.abs(blue-red);
+  const close=Math.min(blue,red);
+  if(diff<Math.max(4,close*.18))return "neutral";
+  return blue<red?"blue":"red";
+}
+function markerHomePlayerFromColor(color){
+  if(color==="blue"||color==="red"){
+    if(S.mission.sides.p1===color)return "p1";
+    if(S.mission.sides.p2===color)return "p2";
+  }
+  return "neutral";
+}
+function markerHomePlayer(marker,state){
+  if(state?.home==="p1"||state?.home==="p2"||state?.home==="neutral")return state.home;
+  return markerHomePlayerFromColor(inferredMarkerHomeColor(marker));
+}
+function markerHomeLabel(marker,state){
+  const home=markerHomePlayer(marker,state);
+  if(home==="p1"||home==="p2")return `${home.toUpperCase()} home`;
+  return "Neutral";
+}
+function markerHomeColor(marker,state){
+  const home=markerHomePlayer(marker,state);
+  return home==="p1"||home==="p2"?ARMIES[home].color:"var(--dim)";
+}
+function missionMarkerGridHtml(){
+  return `<div class="marker-grid">
+    ${activeMarkers().map(m=>{const r=markerState(m.num);const col=markerControlColor(r);const sup=markerControlSupply(r);return`<button class="marker-chip ${r.active?"active":""}" data-edit-marker="${m.num}"
+      style="border-color:${r.controller==="neutral"?"var(--border)":col};background:${r.controller==="neutral"?"linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.005)),var(--surfaceAlt)":`linear-gradient(180deg,${alpha(col,.18)},${alpha(col,.06)}),var(--surfaceAlt)`};box-shadow:${r.controller==="neutral"?"none":`0 0 12px ${alpha(col,.16)}`}">
+      <div class="marker-num">M${m.num}</div>
+      <div class="marker-owner" style="color:${col}">${markerControlLabel(r)}</div>
+      <div class="marker-owner" style="color:${markerHomeColor(m,r)}">${markerHomeLabel(m,r)}</div>
+      ${sup!==""?`<div class="marker-supply">Supply ${sup}</div>`:""}
+    </button>`}).join("")}
+  </div>`;
+}
+function missionModalHtml(){
+  if(!S.missionModal)return "";
+  return `<div class="modal-backdrop" data-close-mission></div>
+  <div class="modal-panel">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">Mission Setup</div>
+        <div class="modal-sub">${selMission()?esc(selMission().name):"No mission"} · ${selMap()?esc(selMap().name):"No map"}</div>
+      </div>
+      <button class="modal-close" data-close-mission>×</button>
+    </div>
+    <div class="scale-chips">
+      ${SCALES.map(s=>`<button class="scale-chip ${S.mission.scaleId===s.id?"active":""}" data-scale="${s.id}"
+        style="border-color:${S.mission.scaleId===s.id?"rgba(var(--accent-rgb),.5)":"transparent"};background:${S.mission.scaleId===s.id?"rgba(var(--accent-rgb),.12)":"var(--surfaceAlt)"};color:${S.mission.scaleId===s.id?"var(--accent)":"var(--dim)"}">${s.name}<br><span style="font-size:9px;font-weight:500">${s.table}</span></button>`).join("")}
+    </div>
+    <div class="mission-selects">
+      <select class="mission-select" data-sel-mission>
+        <option value="">— Mission —</option>
+        ${activeMissions().map(m=>`<option value="${m.id}" ${S.mission.missionId===m.id?"selected":""}>${esc(m.name)}</option>`).join("")}
+      </select>
+      <select class="mission-select" data-sel-map>
+        <option value="">— Map —</option>
+        ${activeMaps().map(m=>`<option value="${m.id}" ${S.mission.mapId===m.id?"selected":""}>${esc(m.name)}</option>`).join("")}
+      </select>
+    </div>
+    <div class="mission-stat-row">
+      <span class="mission-stat" style="background:rgba(var(--accent-rgb),.15);color:var(--accent)">Supply cap: ${supplyLabel(supplyCap())}</span>
+      <span class="mission-stat" style="background:rgba(90,122,154,.1);color:#5a7a9a">Round ${S.round}: +${selMission()?selMission().perRound:0}${"\u2009/\u2009"}rnd</span>
+    </div>
+    <div class="sides-row">
+      <span class="sides-label">Deployment sides</span>
+      <span class="side-chip" style="background:rgba(80,130,200,.15);color:#5090d0">P1 ${sideLabel(S.mission.sides.p1)}</span>
+      <span class="side-chip" style="background:rgba(200,80,80,.15);color:#d05050">P2 ${sideLabel(S.mission.sides.p2)}</span>
+      <button class="swap-btn" data-swap-sides>Swap</button>
+    </div>
+    ${(selMission()?.params||[]).length?`<div class="builder-title" style="margin:10px 0 5px">Mission notes</div><div class="builder-status">${(selMission().params||[]).map(esc).join("<br>")}</div>`:""}
+    ${(selMission()?.scoring||[]).length?`<div class="builder-title" style="margin:10px 0 5px">Scoring</div><div class="builder-status">${(selMission().scoring||[]).map(esc).join("<br>")}</div>`:""}
+    ${selMission()?.special?`<div class="builder-title" style="margin:10px 0 5px">End condition</div><div class="builder-status">${esc(selMission().special)}</div>`:""}
+  </div>`;
+}
+function turnModalHtml(){
+  if(!S.turnModal)return "";
+  const p=PHASES[S.phase];
+  const actions=ACTIONS[S.phase]||[];
+  const action=actions[S.selAction]||actions[0];
+  return `<div class="modal-backdrop" data-close-turn></div>
+  <div class="modal-panel">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" style="color:${p.color}">${p.name} Phase</div>
+        <div class="modal-sub">${esc(p.purpose)}</div>
+      </div>
+      <button class="modal-close" data-close-turn>×</button>
+    </div>
+    <div class="action-select-wrap">
+      <select class="action-select" data-sel-action-select style="border-color:${alpha(p.color,.45)};box-shadow:inset 0 0 0 1px ${alpha(p.color,.08)}">
+        ${actions.map((a,i)=>`<option value="${i}" ${i===S.selAction?"selected":""}>${esc(a.title)}${a.ref?` · ${esc(a.ref)}`:""}</option>`).join("")}
+      </select>
+    </div>
+    ${action?`
+    <div class="action-info">
+      <div class="action-title">${esc(action.title)} ${action.ref?`<span class="unit-meta">§${esc(action.ref)}</span>`:""}</div>
+      <div class="action-when">${esc(action.when)}</div>
+    </div>
+    <div class="action-steps">${action.how.map((s,i)=>`<div class="step-row"><span class="step-num" style="background:${alpha(p.color,.18)};color:${p.color}">${i+1}</span><span style="color:var(--text);line-height:1.4">${esc(s)}</span></div>`).join("")}</div>
+    `:""}
+    <div class="resolve-row">
+      <button class="resolve-btn" data-resolve style="background:${p.color};box-shadow:0 4px 16px ${alpha(p.color,.28)}">Resolve</button>
+      <button class="pass-btn ${S.passed[S.activePlayer]?"done":""}" data-pass ${S.passed[S.activePlayer]?"disabled":""}>${S.passed[S.activePlayer]?"Passed":"Pass"}</button>
+    </div>
+    <div class="pass-state">
+      ${["p1","p2"].map(id=>`<span style="color:${S.passed[id]?"var(--dim)":p.color}">${id.toUpperCase()} ${S.passed[id]?"passed":"ready"}</span>`).join("")}
+    </div>
+  </div>`;
+}
+function missionStartsActive(){return (selMission()?.params||[]).some(p=>String(p).toLowerCase().includes("all mission markers are activated"))}
+function markerState(num){
+  const k=String(num);
+  if(!S.mission.markers[k]){
+    const active=missionStartsActive();
+    S.mission.markers[k]={active,activatedRound:active?1:null,controller:"neutral",p1Supply:0,p2Supply:0};
+  }
+  const r=S.mission.markers[k];
+  if(r.active&&r.activatedRound==null)r.activatedRound=S.round||1;
+  if(r.p1Supply>r.p2Supply)r.controller="p1";
+  else if(r.p2Supply>r.p1Supply)r.controller="p2";
+  else r.controller="neutral";
+  return r;
+}
+function markerSelectedPlayer(num){
+  const r=markerState(num);
+  if(r.selectedPlayer==="p1"||r.selectedPlayer==="p2")return r.selectedPlayer;
+  return r.controller==="p2"?"p2":"p1";
+}
+function markerCounts(){return activeMarkers().reduce((a,m)=>{const r=markerState(m.num);if(r.active)a.active++;if(r.controller==="p1")a.p1++;if(r.controller==="p2")a.p2++;return a},{active:0,p1:0,p2:0})}
+function controlledActiveMarkers(){
+  return activeMarkers().map(m=>({marker:m,state:markerState(m.num),home:markerHomePlayer(m,markerState(m.num))})).filter(({state})=>state.active&&(state.controller==="p1"||state.controller==="p2"));
+}
+function missionScoreKey(){
+  return [S.round,S.mission.scaleId||"",S.mission.missionId||"",S.mission.mapId||""].join(":");
+}
+function missionAutoScore(){
+  const mission=selMission();
+  const id=mission?.id||"";
+  const out={p1:0,p2:0,notes:[],label:"Marker VP"};
+  const controlled=controlledActiveMarkers();
+  if(!mission){out.notes.push("Choose a mission before scoring.");return out}
+  if(id.includes("frontlines")){
+    if(S.round<2){out.notes.push("Frontlines marker VP starts in round 2.");return out}
+    controlled.forEach(({state})=>{out[state.controller]+=1});
+    out.notes.push("Adds 1 VP for each controlled active marker. The +2 control-swing bonus still needs manual VP.");
+  }else if(id.includes("supply-drop")){
+    const start=id.includes("skirmish")?2:1;
+    if(S.round<start){out.notes.push(`Supply Drop marker VP starts in round ${start}.`);return out}
+    controlled.forEach(({state})=>{out[state.controller]+=Number(state.activatedRound||S.round||1)});
+    out.notes.push("Scores active controlled markers by activation round. Scored markers should be toggled inactive after scoring.");
+  }else if(id.includes("divide-and-conquer")){
+    controlled.forEach(({marker,state})=>{if(Number(marker.num)===5)out[state.controller]+=2});
+    out.notes.push("Adds marker 5 VP only. Quarter control and destroyed enemy supply still need manual VP.");
+  }else if(id.includes("gather-the-resources")){
+    if(S.round<2){out.notes.push("Gather the Resources marker VP starts in round 2.");return out}
+    controlled.forEach(({state,home})=>{if((home==="p1"||home==="p2")&&home!==state.controller)out[state.controller]+=2});
+    out.notes.push("Adds 2 VP for controlled markers assigned to the opponent. Gather actions and destroyed enemy supply are manual.");
+  }else if(id.includes("hold-position")){
+    if(S.round<2){out.notes.push("Hold Position marker VP starts in round 2.");return out}
+    controlled.forEach(({state,home})=>{out[state.controller]+=(home==="p1"||home==="p2")&&home!==state.controller?2:1});
+    out.notes.push("Adds 1 VP for neutral/own markers and 2 VP for opponent markers. Destroyed enemy supply is manual.");
+  }else{
+    out.notes.push("This mission uses marker colour/position or action scoring that the companion cannot fully infer yet.");
+  }
+  if(!controlled.length&&!out.notes.length)out.notes.push("No active controlled markers to score.");
+  return out;
+}
+function isScoreVictoryAction(action){
+  return S.phase===3&&/score victory points/i.test(action?.title||"");
+}
+function sideLabel(s){return s==="blue"?"Blue":"Red"}
+function activeMissions(){return MISSIONS.filter(m=>m.type===scaleType())}
+function activeMaps(){return MAPS.filter(m=>m.type===scaleType())}
+function savedBuilder(faction){
+  try{return JSON.parse(localStorage.getItem(BUILDER_FACTIONS[faction]?.key)||"null")}catch{return null}
+}
+function builderHasRoster(faction){
+  const saved=savedBuilder(faction);
+  return !!(saved&&(saved.units||[]).length);
+}
+function builderRosterCount(faction){
+  return (savedBuilder(faction)?.units||[]).length;
+}
+function builderModalHtml(){
+  if(!S.builderModal)return "";
+  return `<div class="modal-backdrop" data-close-builder></div>
+  <div class="modal-panel">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">Army Builder</div>
+        <div class="modal-sub">Import a saved builder roster into ${S.viewingArmy.toUpperCase()}, or open a builder to edit and save one.</div>
+      </div>
+      <button class="modal-close" data-close-builder>×</button>
+    </div>
+    <div class="builder-head">
+      <div class="builder-title">Open builder</div>
+      <div class="builder-links">
+        ${Object.entries(BUILDER_FACTIONS).map(([key,info])=>`<a href="${info.href}" target="_blank" rel="noreferrer">${info.label}</a>`).join("")}
+      </div>
+    </div>
+    <div class="builder-title" style="margin:10px 0 6px">Import saved roster</div>
+    <div class="builder-imports">
+      ${Object.entries(BUILDER_FACTIONS).map(([key,info])=>`<button class="${builderHasRoster(key)?"ready":""}" data-import-builder="${key}" data-import-player="${S.viewingArmy}" ${builderHasRoster(key)?"":"disabled"}>${info.label}<br><span>${builderRosterCount(key)} units</span></button>`).join("")}
+    </div>
+    ${S.builderMsg?`<div class="builder-status">${esc(S.builderMsg)}</div>`:""}
+  </div>`;
+}
+async function loadBuilderPayload(faction){
+  const info=BUILDER_FACTIONS[faction];
+  const text=await fetch(info.payload).then(r=>{if(!r.ok)throw new Error("Payload not found");return r.text()});
+  const assign=text.indexOf("__starcraftTMGRuntimePayload");
+  const start=text.indexOf("{",assign);
+  const end=text.indexOf(";\nwindow.__starcraftTMGRuntimeStatus",start);
+  const json=text.slice(start,end>start?end:undefined).trim().replace(/;\s*$/,"");
+  return JSON.parse(json);
+}
+function maxModelCount(value){
+  const nums=String(value??"1").match(/\d+/g)?.map(Number)||[1];
+  return Math.max(...nums,1);
+}
+function modelRange(value){
+  const nums=String(value??"").match(/\d+/g)?.map(Number)||[];
+  if(!nums.length)return null;
+  return {min:Math.min(...nums),max:Math.max(...nums)};
+}
+function supplyTiersFrom(unit){
+  return (unit?.tiers||[]).map(t=>{
+    const range=modelRange(t.models);
+    return range?{min:range.min,max:range.max,supply:Number(t.supply||0),tier:t.tier||t.name||""}:null;
+  }).filter(Boolean).sort((a,b)=>a.min-b.min);
+}
+function cleanText(value){
+  return String(value??"").replace(/\s+/g," ").trim();
+}
+function normalizeBuilderUnit(entry,payload,index){
+  const unit=(payload.units||[]).find(u=>u.id===entry.unitId)||{};
+  const tier=entry.tier||{};
+  const max=maxModelCount(tier.models||unit.models||1);
+  const stats=unit.stats||{};
+  const selectedUpgrades=(entry.selectedUpgrades||[]).map(upgrade=>({
+    name:upgrade.name||"Upgrade",
+    phase:upgrade.phase||upgrade.timing||"Any Phase",
+    type:upgrade.type||"",
+    cost:upgrade.cost||"",
+    desc:cleanText(upgrade.description||upgrade.text||upgrade.effect||"")
+  }));
+  return {
+    rawUnit:unit,
+    selectedUpgrades,
+    key:`${entry.unitId||unit.id||unit.name||"unit"}-${index}-${Date.now()}`,
+    name:unit.name||entry.unitId||"Unit",
+    role:unit.role||"Unit",
+    tier:tier.tier||tier.name||"T?",
+    supply:Number(tier.supply??unit.supply??1),
+    supplyTiers:supplyTiersFrom(unit),
+    models:{current:max,max},
+    stats:{
+      shield:stats.shield??unit.shield??"-",
+      speed:stats.speed??unit.move??unit.speed??"-",
+      evade:stats.evade??unit.evade??"-",
+      armour:stats.armour??stats.armor??unit.armour??unit.armor??"-",
+      hp:stats.hp??unit.hp??"-",
+      size:stats.size??unit.size??"-"
+    },
+    location:"reserves",
+    engaged:false,
+    activated:false,
+    weapons:(unit.weapons||[]).map(w=>({name:w.name||"Weapon",phase:w.phase||"",range:w.range||"-",target:w.target||"",roa:w.roa||w.attacks||"",hit:w.hit||"-",surge:w.surge||"",sDie:w.sDie||w.sdie||"",dmg:w.damage||w.dmg||"-",keywords:w.keywords||[]})),
+    abilities:(unit.abilities||[]).map(a=>({name:a.name||"Ability",phase:a.phase||"Any Phase",type:a.type||"",desc:cleanText(a.description||a.text||"")})),
+    phaseAbilities:Object.entries(unit.phaseAbilities||{}).flatMap(([phase,list])=>(list||[]).map(a=>({name:a.name||"Ability",phase,type:a.type||"",desc:cleanText(a.description||a.text||"")}))),
+    keywords:unit.keywords||unit.tags||[]
+  };
+}
+async function importBuilderRoster(player,faction){
+  const saved=savedBuilder(faction);
+  if(!saved||(saved.units||[]).length===0){S.builderMsg=`No saved ${BUILDER_FACTIONS[faction].label} roster found. Open the builder and save a list first.`;render();return}
+  try{
+    S.builderMsg=`Importing ${BUILDER_FACTIONS[faction].label}...`;render();
+    const payload=await loadBuilderPayload(faction);
+    const units=(saved.units||[]).map((entry,index)=>normalizeBuilderUnit(entry,payload,index));
+    ARMIES[player]={label:`${player.toUpperCase()} — ${BUILDER_FACTIONS[faction].label}`,color:BUILDER_FACTIONS[faction].color,units};
+    addLog(`${player.toUpperCase()} imported ${BUILDER_FACTIONS[faction].label} roster with ${units.length} units.`);
+    S.viewingArmy=player;
+    S.armyFilter="all";
+    S.expanded={};
+    if(saved.scaleId)S.mission.scaleId=saved.scaleId;
+    if(saved.missionId)S.mission.missionId=saved.missionId;
+    if(saved.mapId)S.mission.mapId=saved.mapId;
+    S.builderModal=false;
+    S.builderMsg=`Imported ${units.length} ${BUILDER_FACTIONS[faction].label} unit${units.length===1?"":"s"} to ${player.toUpperCase()}.`;
+  }catch(err){
+    S.builderMsg=`Could not import ${BUILDER_FACTIONS[faction].label}: ${err.message||err}`;
+  }
+  render();
+}
+
+function applyMissionMarkerScore(opts={}){
+  const score=missionAutoScore();
+  const key=missionScoreKey();
+  if(S.scoredMarkersByRound?.[key]){
+    if(opts.autoAdvance||!confirm("Mission marker VP already scored for this round. Score it again?"))return false;
+  }
+  if(!score.p1&&!score.p2){
+    if(!opts.silentNoScore)addLog(`Mission marker scoring: no automatic VP added. ${score.notes.join(" ")}`);
+    if(!opts.autoAdvance)render();
+    return false;
+  }
+  const before={p1:S.vp.p1,p2:S.vp.p2};
+  S.vp.p1=Math.min(99,S.vp.p1+score.p1);
+  S.vp.p2=Math.min(99,S.vp.p2+score.p2);
+  S.scoredMarkersByRound=S.scoredMarkersByRound||{};
+  S.scoredMarkersByRound[key]=true;
+  addLog(`${opts.autoAdvance?"Before advancing round, mission marker scoring":"Mission marker scoring"} added P1 +${score.p1}, P2 +${score.p2}. VP ${before.p1}-${before.p2} to ${S.vp.p1}-${S.vp.p2}. ${score.notes.join(" ")}`);
+  buzz(18);
+  if(!opts.autoAdvance)render();
+  return true;
+}
+function resolveCurrentAction(){
+  const action=((ACTIONS[S.phase]||[])[S.selAction]||{});
+  if(isScoreVictoryAction(action)){
+    applyMissionMarkerScore();
+    return;
+  }
+  addLog(`${ARMIES[S.activePlayer].label} resolved ${action.title||"an action"}.`);
+  const o=S.activePlayer==="p1"?"p2":"p1";
+  if(!S.passed[o])S.activePlayer=o;
+  render();
+}
+
+// ─── TAP COUNTER LOGIC ───
+const buzz=(ms=12)=>{try{navigator.vibrate?.(ms)}catch(e){}};
+const tapTimers={};
+const hasTouch="ontouchstart" in window;
+const TAP_CONFIGS={
+  round:{get:()=>S.round,min:1,max:5,set:v=>setRound(v)},
+  vp1:{get:()=>S.vp.p1,min:0,max:99,set:v=>{if(S.vp.p1!==v)addLog(`${ARMIES.p1.label} VP changed from ${S.vp.p1} to ${v}.`);S.vp.p1=v;render()}},
+  vp2:{get:()=>S.vp.p2,min:0,max:99,set:v=>{if(S.vp.p2!==v)addLog(`${ARMIES.p2.label} VP changed from ${S.vp.p2} to ${v}.`);S.vp.p2=v;render()}}
+};
+function tapStart(id){
+  const cfg=TAP_CONFIGS[id];
+  if(!cfg)return;
+  clearTimeout(tapTimers[id]?.timer);
+  clearInterval(tapTimers[id]?.interval);
+  tapTimers[id]={did:false};
+  const el=document.querySelector(`[data-tap="${id}"]`);
+  if(el)el.classList.add("pressing");
+  tapTimers[id].timer=setTimeout(()=>{
+    tapTimers[id].did=true;
+    buzz(30);
+    cfg.set(Math.max(cfg.min,cfg.get()-1));
+    tapTimers[id].interval=setInterval(()=>{
+      buzz(20);
+      cfg.set(Math.max(cfg.min,cfg.get()-1));
+    },260);
+  },600);
+}
+function tapEnd(id){
+  const cfg=TAP_CONFIGS[id];
+  if(!cfg)return;
+  const cur=cfg.get();
+  clearTimeout(tapTimers[id]?.timer);
+  clearInterval(tapTimers[id]?.interval);
+  const el=document.querySelector(`[data-tap="${id}"]`);
+  if(el)el.classList.remove("pressing");
+  if(!tapTimers[id]?.did){buzz(12);cfg.set(Math.min(cfg.max,cur+1))}
+  delete tapTimers[id];
+}
+function tapCancel(id){
+  clearTimeout(tapTimers[id]?.timer);
+  clearInterval(tapTimers[id]?.interval);
+  const el=document.querySelector(`[data-tap="${id}"]`);
+  if(el)el.classList.remove("pressing");
+  delete tapTimers[id];
+}
+function bindTapCounters(){
+  document.querySelectorAll("[data-tap]").forEach(el=>{
+    const id=el.dataset.tap;
+    if(!TAP_CONFIGS[id])return;
+    if(hasTouch){
+      el.addEventListener("touchstart",e=>{e.preventDefault();tapStart(id)},{passive:false});
+      el.addEventListener("touchend",e=>{e.preventDefault();tapEnd(id)},{passive:false});
+      el.addEventListener("touchcancel",()=>tapCancel(id));
+    }else{
+      el.addEventListener("mousedown",()=>tapStart(id));
+      el.addEventListener("mouseup",()=>tapEnd(id));
+      el.addEventListener("mouseleave",()=>tapCancel(id));
+    }
+  });
+}
+
+// ─── RENDER ───
+function render(){
+  const p=PHASES[S.phase];
+  const actions=ACTIONS[S.phase]||[];
+  const action=actions[S.selAction]||actions[0];
+  const army=ARMIES[S.viewingArmy];
+  const allU=units();
+  const board=allU.filter(u=>u.location==="battlefield");
+  const rsv=allU.filter(u=>u.location==="reserves");
+  const dest=allU.filter(u=>u.location==="destroyed");
+  const filt=filtered();
+  const mc=markerCounts();
+  const theme=setThemeGlow();
+  const sup1=armySupply("p1");
+  const sup2=armySupply("p2");
+  const markerScore=isScoreVictoryAction(action)?missionAutoScore():null;
+  const markerScoreDone=markerScore&&S.scoredMarkersByRound?.[missionScoreKey()];
+  const vpHint=id=>markerScoreDone?"scored":markerScore?`mission +${markerScore[id]}`:"tap + · hold −";
+  const vpHintClass=markerScore?"vp-hint score-ready":"vp-hint";
+
+  document.getElementById("app").innerHTML=`
+  <!-- SCOREBAR (sticky) -->
+  <div class="scorebar" style="background:
+    radial-gradient(circle at 18% 50%,rgba(${theme.p1Rgb},.18),transparent 46%),
+    radial-gradient(circle at 82% 50%,rgba(${theme.p2Rgb},.18),transparent 46%),
+    linear-gradient(180deg,#1a1520,#161222 68%,#12101c)">
+    <div class="vp-row">
+      <div class="supply-side ${sup1.over?"over":""}" style="--sc:${ARMIES.p1.color||"var(--accent)"}">
+        <span class="supply-num">${supplyLabel(sup1.available)}</span>
+        <span class="supply-detail">available<br>supply</span>
+      </div>
+      <div class="vp-block">
+        <div class="vp-score-hit" data-tap="vp1">
+          <div class="vp-label" style="color:${ARMIES.p1.color};opacity:${S.activePlayer==="p1"?1:.6};font-weight:${S.activePlayer==="p1"?700:600}">P1${S.firstPlayer==="p1"?" ★":""}</div>
+          <div class="vp-value">${S.vp.p1}</div>
+          <div class="${vpHintClass}">${vpHint("p1")}</div>
+        </div>
+      </div>
+      <div class="vp-sep"><span>VP</span><span>vs</span></div>
+      <div class="vp-block">
+        <div class="vp-score-hit" data-tap="vp2">
+          <div class="vp-label" style="color:${ARMIES.p2.color};opacity:${S.activePlayer==="p2"?1:.6};font-weight:${S.activePlayer==="p2"?700:600}">P2${S.firstPlayer==="p2"?" ★":""}</div>
+          <div class="vp-value">${S.vp.p2}</div>
+          <div class="${vpHintClass}">${vpHint("p2")}</div>
+        </div>
+      </div>
+      <div class="supply-side ${sup2.over?"over":""}" style="--sc:${ARMIES.p2.color||"var(--accent)"}">
+        <span class="supply-num">${supplyLabel(sup2.available)}</span>
+        <span class="supply-detail">available<br>supply</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME STRIP (scrolls away) -->
+  <div class="game-strip">
+    <div class="score-row1">
+      <div class="round-block" data-tap="round">
+        <div class="round-label">Round</div>
+        <div class="round-value">${S.round}</div>
+        <div class="round-hint">tap + · hold −</div>
+      </div>
+      <div class="phase-col">
+        <div class="phase-pills">
+          ${PHASES.map((ph,i)=>`<button class="phase-pill ${i===S.phase?"active":""}" data-phase="${i}"
+            style="color:${i===S.phase?ph.color:"var(--dim)"};border-color:${i===S.phase?ph.color:"transparent"};background:${i===S.phase?alpha(ph.color,.14):"transparent"}">${ph.n}</button>`).join("")}
+        </div>
+        <div class="phase-row2">
+          <button class="phase-open-btn" data-open-turn>
+            <span class="phase-name" style="color:${p.color}">${p.name} Phase</span>
+            <span class="phase-open-tag">Open</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content">
+  ${S.tab==="play"?`
+  ${turnModalHtml()}
+  ${logModalHtml()}
+  ${readmeModalHtml()}
+
+  <!-- MISSION PANEL -->
+  <div class="mission-panel">
+    <div class="mission-header">
+      <div class="mission-header-info">
+        <div class="mission-title">${selMission()?esc(selMission().name):"No mission"} · ${selMap()?esc(selMap().name):"No map"}</div>
+        <div class="mission-sub">${selScale().name} · Supply cap ${supplyLabel(supplyCap())} · ${mc.active}${"/"+ activeMarkers().length} markers active</div>
+      </div>
+      <button class="builder-open-btn" data-open-mission>Setup</button>
+    </div>
+    <div class="sec-label" style="margin-bottom:5px">Mission Markers</div>
+    ${missionMarkerGridHtml()}
+    ${S.mission.editMarker!=null?markerEditorHtml(S.mission.editMarker):""}
+  </div>
+  ${missionModalHtml()}
+  ${S.supplyMsg?`<div style="padding:4px 12px"><div class="supply-note" style="color:#c96a4a;font-size:10px">${esc(S.supplyMsg)}</div></div>`:""}
+
+  <!-- ARMY SECTION -->
+  ${builderBarHtml()}
+  <div class="army-section">
+    <div class="army-toggle">
+      ${["p1","p2"].map(id=>{const a=ARMIES[id];return`<button class="${S.viewingArmy===id?"active":""}" data-view-army="${id}"
+        style="color:${S.viewingArmy===id?a.color:"var(--dim)"};background:${S.viewingArmy===id?alpha(a.color,.14):"var(--surfaceAlt)"};border-bottom-color:${S.viewingArmy===id?a.color:"transparent"};${S.viewingArmy===id?`box-shadow:inset 0 0 0 1px ${alpha(a.color,.22)}`:""}">${a.label} (${a.units.length})</button>`}).join("")}
+    </div>
+    <div class="filter-chips">
+      ${[{id:"all",l:`All (${allU.length})`},{id:"reserves",l:`Reserves (${rsv.length})`},{id:"battlefield",l:`Board (${board.length})`},{id:"destroyed",l:`Destroyed (${dest.length})`}].map(f=>`<button class="filter-chip ${S.armyFilter===f.id?"active":""}" data-filter="${f.id}"
+        style="border-color:${S.armyFilter===f.id?army.color:"var(--border)"};background:${S.armyFilter===f.id?alpha(army.color,.12):"transparent"};color:${S.armyFilter===f.id?army.color:"var(--dim)"}">${f.l}</button>`).join("")}
+    </div>
+    ${filt.length?filt.map(u=>unitCardHtml(u)).join(""):`<div class="empty-msg">No units in this category.</div>`}
+  </div>
+  ${builderModalHtml()}
+  <div class="danger-zone">
+    <div class="utility-left">
+      <button class="log-open-btn" data-open-log>Log</button>
+      <button class="log-open-btn" data-open-readme>Read Me</button>
+    </div>
+    <button class="reset-game-btn" data-reset-game>Reset Game</button>
+  </div>
+  `:`
+  <!-- RULES TAB -->
+  <div class="rules-tab">
+    <div class="search-wrap"><input class="search-input" id="rulesSearch" placeholder="Search all rules..." value="${esc(S.search)}"><button class="search-clear" data-clear-search style="display:${S.search?"block":"none"}">×</button></div>
+    <div class="sec-label" style="margin-bottom:5px">Saved</div>
+    <div class="saved-chips">
+      ${[{l:"Line of Sight",r:"Part 7"},{l:"Coherency",r:"Part 4"},{l:"Supply",r:"Part 6"}].map(s=>`<button class="saved-chip"><strong>${s.l}</strong><small>${s.r}</small></button>`).join("")}
+    </div>
+    <div class="sec-label" style="margin-bottom:5px">Library</div>
+    ${[{k:"Part 2",t:"Core Concepts",c:8},{k:"Part 3",t:"Dice and Rolling",c:5},{k:"Part 4",t:"Measuring & Movement",c:7},{k:"Part 5",t:"Cards & Characteristics",c:9},{k:"Part 6",t:"The Supply System",c:4},{k:"Part 7",t:"The Battlefield",c:6},{k:"Part 8",t:"The Game Sequence",c:11},{k:"Part 9",t:"Preparing for Battle",c:5},{k:"Part 10",t:"Advanced Rules",c:8},{k:"Part 11",t:"Keyword Glossary",c:12},{k:"Part 12",t:"Quick Reference",c:3}].map(p=>`<button class="lib-row"><div><span class="lib-kicker">${p.k}</span><div class="lib-title">${p.t}</div></div><span class="lib-count">${p.c}</span></button>`).join("")}
+  </div>
+  `}
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    ${[{id:"play",icon:"▶",l:"Play"},{id:"rules",icon:"§",l:"Rules"}].map(t=>`<button class="nav-btn ${S.tab===t.id?"active":""}" data-tab="${t.id}" style="color:${S.tab===t.id?"var(--accent)":"var(--dim)"}"><span class="nav-icon">${t.icon}</span><span class="nav-label">${t.l}</span></button>`).join("")}
+  </nav>`;
+
+  saveGameState();
+  bind();
+}
+
+function markerEditorHtml(num){
+  const r=markerState(num);
+  const marker=activeMarkers().find(m=>Number(m.num)===Number(num));
+  const ownerLbl=markerControlLabel(r);
+  const ownerColor=markerControlColor(r);
+  const home=markerHomePlayer(marker,r);
+  const homeColor=markerHomeColor(marker,r);
+  const selected=markerSelectedPlayer(num);
+  const selectedColor=ARMIES[selected].color;
+  const sideButton=id=>`<button class="marker-control-side ${selected===id?"active":""}" data-marker-select-player="${num}" data-controller="${id}"
+    style="border-color:${selected===id?ARMIES[id].color:"var(--border)"};color:${ARMIES[id].color};background:${selected===id?`linear-gradient(180deg,${alpha(ARMIES[id].color,.18)},${alpha(ARMIES[id].color,.06)}),var(--surfaceAlt)`:"var(--surfaceAlt)"}">
+    ${id.toUpperCase()}<small>${r[id+"Supply"]} supply</small>
+  </button>`;
+  return`<div class="marker-editor">
+    <div class="marker-edit-head">
+      <span class="marker-edit-title">M${num} · <span style="color:${ownerColor}">${ownerLbl}</span> · <span style="color:${homeColor}">${markerHomeLabel(marker,r)}</span></span>
+      <button class="marker-active-btn ${r.active?"on":""}" data-marker-toggle-active="${num}">${r.active?"Active":"Inactive"}</button>
+    </div>
+    <div class="marker-control-board">
+      ${sideButton("p1")}
+      <button class="marker-control-center" data-marker-supply-counter="${num}" data-mplayer="${selected}" style="border-color:${selectedColor};color:${selectedColor};background:linear-gradient(180deg,${alpha(selectedColor,.14)},${alpha(selectedColor,.04)}),var(--surfaceAlt)">
+        ${r[selected+"Supply"]}<small>${selected.toUpperCase()} · tap + · hold −</small>
+      </button>
+      ${sideButton("p2")}
+    </div>
+    <div class="marker-home-row">
+      ${["neutral","p1","p2"].map(id=>{const color=id==="neutral"?"var(--dim)":ARMIES[id].color;return`<button class="marker-home-btn ${home===id?"active":""}" data-marker-home="${num}" data-home="${id}"
+        style="color:${color};border-color:${home===id?color:"var(--border)"};background:${home===id&&id!=="neutral"?alpha(color,.1):"var(--surfaceAlt)"}">${id==="neutral"?"Neutral":`${id.toUpperCase()} home`}</button>`}).join("")}
+    </div>
+  </div>`;
+}
+
+function statEntries(u){
+  const labels={shield:"SH",speed:"SPD",evade:"EV",armour:"ARM",armor:"ARM",hp:"HP",size:"SZ"};
+  return Object.entries(u.stats||{}).filter(([,v])=>v!==undefined&&v!==null&&v!==""&&v!=="-").map(([k,v])=>[labels[k]||k.toUpperCase(),v]);
+}
+function weaponProfileHtml(w){
+  const bits=[
+    ["R",w.range],
+    ["Target",w.target],
+    ["RoA",w.roa],
+    ["Hit",w.hit],
+    ["Surge",w.surge],
+    ["S",w.sDie],
+    ["D",w.dmg]
+  ].filter(([,v])=>v!==undefined&&v!==null&&v!==""&&v!=="-");
+  const kws=w.keywords||[];
+  const phaseTag=(w.phase||"").replace(/\s*Phase$/i,"");
+  return `<div class="weapon-table">
+    <div class="weapon-table-header">
+      <span class="weapon-table-name">${esc(w.name)}</span>
+      ${phaseTag?`<span class="weapon-table-phase">${esc(phaseTag)}</span>`:""}
+    </div>
+    <div class="weapon-table-stats">
+      ${bits.map(([k,v])=>`<div class="weapon-table-cell"><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join("")}
+    </div>
+    ${kws.length?`<div class="weapon-table-kw">${kws.map(k=>`<span class="kw-chip">${esc(k)}</span>`).join("")}</div>`:""}
+  </div>`;
+}
+function abilityListHtml(title,list){
+  return (list||[]).length?`<div style="margin-bottom:8px"><div class="sec-label">${title}</div>
+    ${list.map(a=>{const phaseTag=(a.phase||"").replace(/\s*Phase$/i,"");return`<div class="ability-block">
+      <div class="ability-header"><span class="ability-title">${esc(a.name)}</span>${phaseTag?`<span class="ability-phase-tag">${esc(phaseTag)}</span>`:""}</div>
+      ${a.desc||a.type?`<div class="ability-body">${a.type?`<strong>${esc(a.type)}</strong> `:""}${a.desc?esc(a.desc):""}</div>`:""}
+    </div>`}).join("")}
+  </div>`:"";
+}
+function unitCardHtml(u){
+  const loc=LOC[u.location]||LOC.reserves;
+  const dead=u.location==="destroyed"||u.models.current===0;
+  const open=!!S.expanded[u.key];
+  const tags=[...(u.keywords||[])].filter(Boolean);
+  const roleClass=u.role?`role-${u.role.toLowerCase()}`:"";
+  const owner=findUnitOwner(u.key);
+  const armyColor=ARMIES[owner]?.color||"#7b93a8";
+  const locShort={reserves:"Res",battlefield:"Board",destroyed:"Dead"}[u.location]||loc.label;
+  const activeSupply=effectiveSupply(u);
+  const supplyText=unitSupplyTiers(u).length&&activeSupply!==Number(u.supply||0)?`S${activeSupply}/${u.supply}`:`S${activeSupply}`;
+  return`<div class="unit-card ${roleClass} ${dead?"dead":""}" style="--unit-color-rgb:${colorRgb(armyColor)}">
+    <div class="unit-row" data-expand="${u.key}">
+      <span class="loc-dot" style="background:${loc.color};box-shadow:0 0 6px ${loc.color}55"></span>
+      <div class="unit-main">
+        <span class="unit-name ${dead?"dead":""}">${esc(u.name)}</span>
+        <span class="unit-meta">${supplyText}</span>
+      </div>
+      <div class="unit-controls">
+        <button class="location-chip" data-cycle-loc="${u.key}" style="border-color:${alpha(loc.color,.55)};background:${alpha(loc.color,.055)};color:${loc.color}">${locShort}</button>
+        ${[["engaged","Eng","#e07845"],["activated","Act","#6b8cce"]].map(([k,l,c])=>`<button class="toggle-chip ${u[k]?"on":""}" data-unit-toggle="${u.key}" data-flag="${k}"
+          style="border-color:${u[k]?c:"transparent"};background:${u[k]?alpha(c,.14):"transparent"};color:${u[k]?c:"var(--dim)"}">${l}</button>`).join("")}
+        <button class="model-badge" data-model-counter="${u.key}" title="Tap to add a model. Hold to remove one." style="border-color:${alpha(loc.color,.38)};background:${alpha(loc.color,.08)};color:${u.models.current===u.models.max?"#22c55e":loc.color}">
+          <span>${u.models.current}/${u.models.max}</span><small>+/-</small>
+        </button>
+      </div>
+      <span class="unit-chevron ${open?"open":""}">›</span>
+    </div>
+    ${open?`<div class="unit-expand">
+      <div class="stat-grid">
+        ${statEntries(u).map(([l,v])=>`<div class="stat-chip"><span class="stat-label">${esc(l)}</span><span class="stat-val">${esc(v)}</span></div>`).join("")}
+        <div class="stat-chip" style="cursor:pointer" data-model-counter="${u.key}">
+          <span class="stat-label">Models</span>
+          <span class="stat-val">${u.models.current}/${u.models.max}</span>
+        </div>
+      </div>
+      <div class="sec-label">Weapons</div>
+      ${u.weapons.map(weaponProfileHtml).join("")}
+      ${abilityListHtml("Abilities",u.abilities)}
+      ${abilityListHtml("Phase Abilities",u.phaseAbilities)}
+      ${abilityListHtml("Upgrades",u.selectedUpgrades)}
+      ${tags.length?`<div style="margin-bottom:8px">${tags.map(k=>`<span class="kw-chip">${esc(k)}</span>`).join("")}</div>`:""}
+      <div class="loc-btns">
+        ${["reserves","battlefield","destroyed"].map(l=>{const m=LOC[l];const on=u.location===l;const owner=findUnitOwner(u.key);const needed=effectiveSupply(u);const blocked=l==="battlefield"&&!on&&owner&&needed>armySupply(owner).available;return`<button class="loc-btn ${on?"active":""}" data-loc="${u.key}" data-location="${l}" ${blocked?"disabled":""}
+          style="border-color:${on?m.color:"var(--border)"};background:${on?alpha(m.color,.14):"transparent"};color:${on?m.color:"var(--dim)"}">${m.label}</button>`}).join("")}
+      </div>
+    </div>`:""}
+  </div>`;
+}
+
+function findUnitOwner(key){
+  return ["p1","p2"].find(id=>(ARMIES[id]?.units||[]).some(u=>u.key===key))||"";
+}
+function findUnit(key){
+  const owner=findUnitOwner(key);
+  return owner?(ARMIES[owner].units||[]).find(u=>u.key===key):null;
+}
+function setUnitLocation(key,location){
+  const u=findUnit(key);
+  const owner=findUnitOwner(key);
+  if(!u)return;
+  const needed=effectiveSupply(u);
+  if(location==="battlefield"&&u.location!=="battlefield"&&needed>armySupply(owner).available){
+    S.supplyMsg=`${u.name} needs ${needed} supply; ${ARMIES[owner].label} has ${supplyLabel(armySupply(owner).available)} available.`;
+    render();
+    return;
+  }
+  if(u.location!==location)addLog(`${ARMIES[owner].label}: ${u.name} moved from ${LOC[u.location]?.label||u.location} to ${LOC[location]?.label||location}.`);
+  u.location=location;
+  S.supplyMsg="";
+  render();
+}
+function cycleUnitLocation(key){
+  const u=findUnit(key);
+  if(!u)return;
+  const order=["reserves","battlefield","destroyed"];
+  const next=order[(Math.max(0,order.indexOf(u.location))+1)%order.length];
+  setUnitLocation(key,next);
+}
+function setModelCount(key,next,ms=12){
+  const u=findUnit(key);
+  if(!u)return;
+  const previous=u.models.current;
+  const previousSupply=effectiveSupply(u);
+  u.models.current=Math.max(0,Math.min(u.models.max,Number(next)||0));
+  if(u.models.current===0)u.location="destroyed";
+  S.supplyMsg="";
+  if(u.models.current!==previous){
+    const nextSupply=effectiveSupply(u);
+    addLog(`${u.name} models changed from ${previous} to ${u.models.current}${nextSupply!==previousSupply?`; supply is now ${nextSupply}.`:"."}`);
+    buzz(ms);
+  }
+  render();
+}
+function adjustModelCount(key,delta,ms=12){
+  const u=findUnit(key);
+  if(!u)return;
+  setModelCount(key,u.models.current+delta,ms);
+}
+const modelTimers={};
+const markerSupplyTimers={};
+function modelCounterStart(el,key,e){
+  e.preventDefault();
+  e.stopPropagation();
+  clearTimeout(modelTimers[key]?.timer);
+  clearInterval(modelTimers[key]?.interval);
+  modelTimers[key]={did:false};
+  el.classList.add("pressing");
+  modelTimers[key].timer=setTimeout(()=>{
+    modelTimers[key].did=true;
+    adjustModelCount(key,-1,30);
+    modelTimers[key].interval=setInterval(()=>adjustModelCount(key,-1,24),260);
+  },600);
+}
+function modelCounterEnd(el,key,e){
+  e.preventDefault();
+  e.stopPropagation();
+  const t=modelTimers[key];
+  if(!t)return;
+  clearTimeout(t.timer);
+  clearInterval(t.interval);
+  el.classList.remove("pressing");
+  if(!t.did)adjustModelCount(key,1,12);
+  delete modelTimers[key];
+}
+function setMarkerSupply(num,player,next,ms=12){
+  const r=markerState(num);
+  const key=player+"Supply";
+  const prev=r[key];
+  r.selectedPlayer=player;
+  r[key]=Math.max(0,Number(next)||0);
+  markerState(num);
+  if(r[key]!==prev){addLog(`M${num}: ${ARMIES[player].label} marker supply changed from ${prev} to ${r[key]}.`);buzz(ms)}
+  render();
+}
+function adjustMarkerSupply(num,player,delta,ms=12){
+  const r=markerState(num);
+  setMarkerSupply(num,player,r[player+"Supply"]+delta,ms);
+}
+function setMarkerController(num,controller){
+  const r=markerState(num);
+  const previous=markerControlLabel(r);
+  if(controller==="p1"){
+    r.p1Supply=Math.max(1,Number(r.p2Supply||0)+1);
+  }else if(controller==="p2"){
+    r.p2Supply=Math.max(1,Number(r.p1Supply||0)+1);
+  }else{
+    r.p1Supply=0;
+    r.p2Supply=0;
+  }
+  markerState(num);
+  const next=markerControlLabel(r);
+  if(previous!==next)addLog(`M${num}: control changed from ${previous} to ${next}.`);
+  buzz(12);
+  render();
+}
+function selectMarkerPlayer(num,player){
+  const r=markerState(num);
+  r.selectedPlayer=player==="p2"?"p2":"p1";
+  buzz(8);
+  render();
+}
+function setMarkerHome(num,home){
+  const r=markerState(num);
+  r.home=(home==="p1"||home==="p2")?home:"neutral";
+  const marker=activeMarkers().find(m=>Number(m.num)===Number(num));
+  addLog(`M${num} assigned as ${markerHomeLabel(marker,r)}.`);
+  buzz(8);
+  render();
+}
+function cycleMarkerController(num){
+  const r=markerState(num);
+  const next=r.controller==="neutral"?"p1":r.controller==="p1"?"p2":"neutral";
+  setMarkerController(num,next);
+}
+function markerSupplyStart(el,num,player,e){
+  e.preventDefault();
+  e.stopPropagation();
+  const key=`${num}-${player}`;
+  clearTimeout(markerSupplyTimers[key]?.timer);
+  clearInterval(markerSupplyTimers[key]?.interval);
+  markerSupplyTimers[key]={did:false};
+  el.classList.add("pressing");
+  markerSupplyTimers[key].timer=setTimeout(()=>{
+    markerSupplyTimers[key].did=true;
+    adjustMarkerSupply(num,player,-1,30);
+    markerSupplyTimers[key].interval=setInterval(()=>adjustMarkerSupply(num,player,-1,24),260);
+  },600);
+}
+function markerSupplyEnd(el,num,player,e){
+  e.preventDefault();
+  e.stopPropagation();
+  const key=`${num}-${player}`;
+  const t=markerSupplyTimers[key];
+  if(!t)return;
+  clearTimeout(t.timer);
+  clearInterval(t.interval);
+  el.classList.remove("pressing");
+  if(!t.did)adjustMarkerSupply(num,player,1,12);
+  delete markerSupplyTimers[key];
+}
+
+function bind(){
+  bindTapCounters();
+  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab;render()});
+  document.querySelectorAll("[data-phase]").forEach(b=>b.onclick=()=>{const next=+b.dataset.phase;if(S.phase===next)return;addLog(`Phase changed from ${PHASES[S.phase].name} to ${PHASES[next].name}.`);eachUnit(u=>{u.activated=false});S.phase=next;S.selAction=0;S.showSteps=false;S.passed={p1:false,p2:false};render()});
+  document.querySelectorAll("[data-reset-game]").forEach(b=>b.onclick=()=>resetGameState());
+  document.querySelectorAll("[data-open-log]").forEach(b=>b.onclick=()=>{S.logModal=true;render()});
+  document.querySelectorAll("[data-close-log]").forEach(b=>b.onclick=()=>{S.logModal=false;render()});
+  document.querySelectorAll("[data-open-readme]").forEach(b=>b.onclick=()=>{S.readmeModal=true;render()});
+  document.querySelectorAll("[data-close-readme]").forEach(b=>b.onclick=()=>{S.readmeModal=false;render()});
+  document.querySelectorAll("[data-open-turn]").forEach(b=>b.onclick=()=>{S.turnModal=true;render()});
+  document.querySelectorAll("[data-close-turn]").forEach(b=>b.onclick=()=>{S.turnModal=false;render()});
+  document.querySelectorAll("[data-sel-action]").forEach(b=>b.onclick=()=>{S.selAction=+b.dataset.selAction;S.showSteps=false;render()});
+  document.querySelectorAll("[data-sel-action-select]").forEach(b=>b.onchange=()=>{S.selAction=+b.value;S.showSteps=false;render()});
+  document.querySelectorAll("[data-resolve]").forEach(b=>b.onclick=()=>resolveCurrentAction());
+  document.querySelectorAll("[data-pass]").forEach(b=>b.onclick=()=>{if(S.passed[S.activePlayer])return;addLog(`${ARMIES[S.activePlayer].label} passed in ${PHASES[S.phase].name}.`);S.passed[S.activePlayer]=true;const o=S.activePlayer==="p1"?"p2":"p1";if(!S.passed[o])S.activePlayer=o;render()});
+  document.querySelectorAll("[data-view-army]").forEach(b=>b.onclick=()=>{S.viewingArmy=b.dataset.viewArmy;S.armyFilter="all";render()});
+  document.querySelectorAll("[data-open-builder]").forEach(b=>b.onclick=()=>{S.builderModal=true;render()});
+  document.querySelectorAll("[data-close-builder]").forEach(b=>b.onclick=()=>{S.builderModal=false;render()});
+  document.querySelectorAll("[data-open-mission]").forEach(b=>b.onclick=()=>{S.missionModal=true;render()});
+  document.querySelectorAll("[data-close-mission]").forEach(b=>b.onclick=()=>{S.missionModal=false;render()});
+  document.querySelectorAll("[data-import-builder]").forEach(b=>b.onclick=()=>importBuilderRoster(b.dataset.importPlayer,b.dataset.importBuilder));
+  document.querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>{S.armyFilter=b.dataset.filter;render()});
+  document.querySelectorAll("[data-expand]").forEach(b=>b.onclick=(e)=>{if(e.target.closest("[data-unit-toggle],[data-cycle-loc],[data-model-counter]"))return;const k=b.dataset.expand;S.expanded[k]=!S.expanded[k];render()});
+  document.querySelectorAll("[data-cycle-loc]").forEach(b=>b.onclick=(e)=>{e.stopPropagation();cycleUnitLocation(b.dataset.cycleLoc)});
+  document.querySelectorAll("[data-unit-toggle]").forEach(b=>b.onclick=(e)=>{e.stopPropagation();const u=findUnit(b.dataset.unitToggle);if(u){u[b.dataset.flag]=!u[b.dataset.flag];addLog(`${u.name} marked ${u[b.dataset.flag]?"":"not "}${b.dataset.flag}.`)}render()});
+  document.querySelectorAll("[data-model-counter]").forEach(b=>{
+    b.onpointerdown=(e)=>{b.setPointerCapture?.(e.pointerId);modelCounterStart(b,b.dataset.modelCounter,e)};
+    b.onpointerup=(e)=>modelCounterEnd(b,b.dataset.modelCounter,e);
+    b.onpointercancel=(e)=>{clearTimeout(modelTimers[b.dataset.modelCounter]?.timer);clearInterval(modelTimers[b.dataset.modelCounter]?.interval);b.classList.remove("pressing");delete modelTimers[b.dataset.modelCounter]};
+  });
+  document.querySelectorAll("[data-marker-supply-counter]").forEach(b=>{
+    b.onpointerdown=(e)=>{b.setPointerCapture?.(e.pointerId);markerSupplyStart(b,+b.dataset.markerSupplyCounter,b.dataset.mplayer,e)};
+    b.onpointerup=(e)=>markerSupplyEnd(b,+b.dataset.markerSupplyCounter,b.dataset.mplayer,e);
+    b.onpointercancel=()=>{const key=`${b.dataset.markerSupplyCounter}-${b.dataset.mplayer}`;clearTimeout(markerSupplyTimers[key]?.timer);clearInterval(markerSupplyTimers[key]?.interval);b.classList.remove("pressing");delete markerSupplyTimers[key]};
+  });
+  document.querySelectorAll("[data-loc]").forEach(b=>b.onclick=(e)=>{e.stopPropagation();setUnitLocation(b.dataset.loc,b.dataset.location)});
+  document.querySelectorAll("[data-clear-search]").forEach(b=>b.onclick=()=>{S.search="";render()});
+  const si=document.getElementById("rulesSearch");
+  if(si)si.oninput=()=>{S.search=si.value;render()};
+  // Mission bindings
+  document.querySelectorAll("[data-scale]").forEach(b=>b.onclick=()=>{S.mission.scaleId=b.dataset.scale;S.mission.missionId="";S.mission.mapId="";S.mission.markers={};S.mission.editMarker=null;render()});
+  document.querySelectorAll("[data-sel-mission]").forEach(b=>b.onchange=()=>{S.mission.missionId=b.value;S.mission.markers={};S.mission.editMarker=null;render()});
+  document.querySelectorAll("[data-sel-map]").forEach(b=>b.onchange=()=>{S.mission.mapId=b.value;S.mission.markers={};S.mission.editMarker=null;render()});
+  document.querySelectorAll("[data-swap-sides]").forEach(b=>b.onclick=()=>{S.mission.sides.p1=S.mission.sides.p1==="blue"?"red":"blue";S.mission.sides.p2=S.mission.sides.p1==="blue"?"red":"blue";render()});
+  document.querySelectorAll("[data-edit-marker]").forEach(b=>b.onclick=()=>{const n=+b.dataset.editMarker;S.mission.editMarker=S.mission.editMarker===n?null:n;render()});
+  document.querySelectorAll("[data-marker-control]").forEach(b=>b.onclick=()=>setMarkerController(+b.dataset.markerControl,b.dataset.controller));
+  document.querySelectorAll("[data-marker-select-player]").forEach(b=>b.onclick=()=>selectMarkerPlayer(+b.dataset.markerSelectPlayer,b.dataset.controller));
+  document.querySelectorAll("[data-marker-home]").forEach(b=>b.onclick=()=>setMarkerHome(+b.dataset.markerHome,b.dataset.home));
+  document.querySelectorAll("[data-marker-cycle-control]").forEach(b=>b.onclick=()=>cycleMarkerController(+b.dataset.markerCycleControl));
+  document.querySelectorAll("[data-marker-toggle-active]").forEach(b=>b.onclick=()=>{const n=+b.dataset.markerToggleActive;const r=markerState(n);r.active=!r.active;if(r.active)r.activatedRound=S.round||1;addLog(`M${n} ${r.active?`activated in round ${r.activatedRound}`:"deactivated"}.`);render()});
+}
+
+loadGameState();
+saveReady=true;
+render();
+</script>
+</body>
+</html>

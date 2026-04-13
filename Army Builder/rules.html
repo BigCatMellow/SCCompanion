@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#1a1a1a">
+  <title>Rules Reference - StarCraft: TMG</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    :root {
+      --bg: #0d1118;
+      --panel: #171d28;
+      --panel-2: #1d2531;
+      --panel-3: #263140;
+      --text: #f2efe8;
+      --muted: #a9b0bb;
+      --border: #344256;
+      --accent: #38bdf8;
+      --accent-rgb: 56,189,248;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --movement: #3b82f6;
+      --assault: #f97316;
+      --combat: #ef4444;
+      --scoring: #22c55e;
+      --overview: #8b5cf6;
+      --concepts: #06b6d4;
+      --situations: #ec4899;
+      --abilities: #a855f7;
+      --mistakes: #f59e0b;
+      --shadow: 0 14px 28px rgba(0,0,0,0.34);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      --condensed: "Arial Narrow", "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background:
+        radial-gradient(circle at top center, rgba(56,189,248,0.08), transparent 28%),
+        radial-gradient(circle at 85% 12%, rgba(236,72,153,0.08), transparent 20%),
+        linear-gradient(180deg, #111722 0%, var(--bg) 22%, #0a0e15 100%);
+      color: var(--text);
+      font: 15px/1.5 var(--sans);
+      -webkit-tap-highlight-color: transparent;
+      padding-bottom: calc(72px + env(safe-area-inset-bottom));
+      overflow-x: hidden;
+      scrollbar-width: none;
+    }
+    body::-webkit-scrollbar { width: 0; height: 0; display: none; }
+    .app {
+      max-width: 480px;
+      margin: 0 auto;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: 0 16px 24px;
+    }
+    
+    .header {
+      position: relative;
+      margin-bottom: 14px;
+      padding: 14px 16px 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background:
+        radial-gradient(circle at top right, rgba(56,189,248,0.2), transparent 34%),
+        radial-gradient(circle at 12% 18%, rgba(236,72,153,0.1), transparent 24%),
+        linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01));
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .header::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--accent);
+    }
+    .header-eyebrow {
+      color: rgba(56,189,248,0.95);
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .title { font-family: var(--condensed); font-size: 1.42rem; font-weight: 800; margin-bottom: 4px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .subtitle { font-size: 0.82rem; color: var(--muted); max-width: 34ch; }
+    .content-tabs {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 300;
+      display: flex;
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+    .content-tab {
+      flex: 1;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 6px 4px;
+      min-height: 56px;
+      font-family: var(--condensed);
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      text-decoration: none;
+    }
+    .content-tab.active {
+      color: var(--accent);
+      background: rgba(56,189,248,0.12);
+      box-shadow: inset 0 0 0 1px rgba(56,189,248,0.22);
+    }
+    .content-tab:not(.active):hover {
+      color: var(--text);
+      background: var(--panel-2);
+    }
+    .content-tab-icon {
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+    .content-tab-label {
+      line-height: 1;
+    }
+    .content-view { display: none; }
+    .content-view.active { display: block; }
+    
+    .search-container {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: calc(env(safe-area-inset-top, 0px) + 10px) 0 12px;
+      background: linear-gradient(180deg, rgba(13,17,24,0.98), rgba(13,17,24,0.92));
+      backdrop-filter: blur(10px);
+      margin-bottom: 10px;
+    }
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 0 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+    }
+    .search-box:focus-within { border-color: var(--accent); }
+    .search-icon { color: var(--muted); margin-right: 8px; }
+    .search-input {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 15px;
+      padding: 12px 0;
+      outline: none;
+    }
+    .search-input::placeholder { color: var(--muted); }
+    .clear-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 4px;
+      display: none;
+    }
+    .clear-btn.visible { display: block; }
+    .clear-btn:hover { color: var(--text); }
+    
+    .quick-nav {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 8px 0 16px;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .quick-nav::-webkit-scrollbar { display: none; }
+    .nav-btn {
+      flex-shrink: 0;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .nav-btn:hover { border-color: var(--accent); color: var(--text); }
+    .nav-btn.movement { border-color: var(--movement); color: var(--movement); }
+    .nav-btn.assault { border-color: var(--assault); color: var(--assault); }
+    .nav-btn.combat { border-color: var(--combat); color: var(--combat); }
+    .nav-btn.scoring { border-color: var(--scoring); color: var(--scoring); }
+    .app-menu-btn { display:none; }
+    .app-menu-overlay { position:fixed; inset:0; background:rgba(0,0,0,.55); backdrop-filter:blur(3px); z-index:9998; opacity:0; pointer-events:none; transition:opacity .18s ease; }
+    .app-menu-overlay.open { opacity:1; pointer-events:auto; }
+    .app-menu-panel { position:fixed; top:0; left:0; bottom:0; width:min(82vw,320px); background:linear-gradient(180deg, #141d27 0%, #111722 100%); border-right:1px solid rgba(255,255,255,.08); box-shadow:18px 0 38px rgba(0,0,0,.4); z-index:9999; transform:translateX(-105%); opacity:0; transition:transform .24s ease, opacity .2s ease; padding:calc(env(safe-area-inset-top,0px) + 18px) 14px calc(env(safe-area-inset-bottom,0px) + 18px); display:flex; flex-direction:column; }
+    .app-menu-panel.open,
+    .app-menu-overlay.open .app-menu-panel { transform:translateX(0); opacity:1; }
+    body.app-menu-open { overflow:hidden; }
+    .app-menu-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:0 4px 12px; border-bottom:1px solid rgba(255,255,255,.08); margin-bottom:12px; opacity:0; transform:translateY(8px); transition:opacity .18s ease .03s, transform .22s ease .03s; }
+    .app-menu-head-copy { min-width:0; }
+    .app-menu-eyebrow { color:#9fcfe0; font-family: var(--mono); font-size:.68rem; text-transform:uppercase; letter-spacing:.12em; font-weight:700; margin-bottom:4px; }
+    .app-menu-title { color:var(--text); font-family: var(--condensed); font-size:1.05rem; font-weight:800; text-transform: uppercase; }
+    .app-menu-close { width:32px; height:32px; flex:0 0 32px; border-radius:999px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text); font-size:1.2rem; line-height:1; cursor:pointer; transition:background .18s ease, border-color .18s ease, transform .18s ease; }
+    .app-menu-close:hover { background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.2); transform:translateY(-1px); }
+    .app-menu-list { display:flex; flex-direction:column; gap:8px; opacity:0; transform:translateY(10px); transition:opacity .18s ease .06s, transform .22s ease .06s; }
+    .app-menu-section-label { padding:10px 12px 2px; color:var(--muted); font-size:.8rem; font-weight:600; }
+    .app-menu-link { display:flex; align-items:center; gap:10px; padding:12px 12px; border-radius:12px; color:var(--text); border:1px solid transparent; background:rgba(255,255,255,.02); font-weight:700; transition:transform .18s ease, background .18s ease, border-color .18s ease, color .18s ease; }
+    .app-menu-link:hover { background:rgba(255,255,255,.05); border-color:rgba(255,255,255,.06); transform:translateX(4px); }
+    body.app-menu-open .app-menu-head,
+    body.app-menu-open .app-menu-list { opacity:1; transform:translateY(0); }
+    .app-menu-link.current { border-color:rgba(var(--accent-rgb),.7); background:rgba(var(--accent-rgb),.14); color:#fff; }
+    .app-menu-icon { width:18px; text-align:center; opacity:.9; }
+    
+    .section {
+      margin-bottom: 14px;
+      border-radius: var(--radius);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.18);
+    }
+    .section.hidden { display: none; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      cursor: pointer;
+      gap: 12px;
+      user-select: none;
+    }
+    .section-header:hover { background: var(--panel-2); }
+    .section-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .section-titles { flex: 1; min-width: 0; }
+    .section-name {
+      font-size: 0.95rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .section-meta {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .section-chevron {
+      font-size: 1.2rem;
+      color: var(--muted);
+      transition: transform 0.2s;
+    }
+    .section.expanded .section-chevron { transform: rotate(90deg); }
+    .section-body {
+      display: none;
+      border-top: 1px solid var(--border);
+    }
+    .section.expanded .section-body { display: block; }
+    
+    .subsection { border-bottom: 1px solid var(--border); }
+    .subsection:last-child { border-bottom: none; }
+    .subsection-header {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      cursor: pointer;
+      gap: 10px;
+      background: var(--panel-2);
+    }
+    .subsection-header:hover { background: var(--panel-3); }
+    .subsection-name { flex: 1; font-size: 0.85rem; font-weight: 600; }
+    .subsection-chevron {
+      font-size: 1rem;
+      color: var(--muted);
+      transition: transform 0.2s;
+    }
+    .subsection.expanded .subsection-chevron { transform: rotate(90deg); }
+    .subsection-body {
+      display: none;
+      padding: 12px 16px;
+      background: var(--bg);
+    }
+    .subsection.expanded .subsection-body { display: block; }
+    
+    .prose {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+      line-height: 1.6;
+    }
+    .prose:last-child { margin-bottom: 0; }
+    .prose.practical {
+      font-style: italic;
+      padding: 10px 12px;
+      background: var(--panel);
+      border-radius: 8px;
+      border-left: 3px solid var(--accent);
+    }
+    
+    .rule-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .rule-item {
+      font-size: 0.85rem;
+      padding-left: 20px;
+      position: relative;
+      line-height: 1.5;
+    }
+    .rule-item::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      color: var(--accent);
+      font-weight: bold;
+    }
+    
+    .mistake-item {
+      font-size: 0.85rem;
+      padding: 10px 12px;
+      padding-left: 36px;
+      position: relative;
+      line-height: 1.5;
+      background: rgba(239, 68, 68, 0.1);
+      border-radius: 8px;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      margin-bottom: 8px;
+    }
+    .mistake-item:last-child { margin-bottom: 0; }
+    .mistake-item::before {
+      content: '⚠';
+      position: absolute;
+      left: 12px;
+      color: #ef4444;
+    }
+    
+    .phase-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-right: 6px;
+    }
+    .phase-badge.movement { background: var(--movement); color: white; }
+    .phase-badge.assault { background: var(--assault); color: white; }
+    .phase-badge.combat { background: var(--combat); color: white; }
+    .phase-badge.scoring { background: var(--scoring); color: white; }
+    
+    .section-icon.overview { background: rgba(139, 92, 246, 0.2); color: var(--overview); }
+    .section-icon.concepts { background: rgba(6, 182, 212, 0.2); color: var(--concepts); }
+    .section-icon.round { background: rgba(234, 179, 8, 0.2); color: var(--accent); }
+    .section-icon.phases { background: rgba(99, 102, 241, 0.2); color: #818cf8; }
+    .section-icon.situations { background: rgba(236, 72, 153, 0.2); color: var(--situations); }
+    .section-icon.abilities { background: rgba(168, 85, 247, 0.2); color: var(--abilities); }
+    .section-icon.mistakes { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+    
+    .no-results {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--muted);
+    }
+    .no-results-icon { font-size: 2rem; margin-bottom: 12px; }
+    .no-results-text { font-size: 0.9rem; }
+    
+    .footer {
+      text-align: center;
+      padding: 24px 16px;
+      border-top: 1px solid var(--border);
+      margin-top: 24px;
+    }
+    .footer-text { font-size: 0.75rem; color: var(--muted); }
+    .glossary-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.12), rgba(var(--accent-rgb), 0.03));
+    }
+    .glossary-summary-copy { min-width: 0; }
+    .glossary-summary-title { font-size: 0.92rem; font-weight: 700; margin-bottom: 4px; }
+    .glossary-summary-meta { font-size: 0.76rem; color: var(--muted); line-height: 1.45; }
+    .glossary-count-badge {
+      flex-shrink: 0;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(var(--accent-rgb), 0.14);
+      border: 1px solid rgba(var(--accent-rgb), 0.28);
+      color: #bae6fd;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .glossary-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+      background: var(--bg);
+    }
+    .glossary-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01));
+      overflow: hidden;
+    }
+    .glossary-card-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 14px 10px;
+    }
+    .glossary-card-name {
+      font-size: 0.92rem;
+      font-weight: 800;
+      line-height: 1.3;
+    }
+    .glossary-card-type {
+      flex-shrink: 0;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: rgba(var(--accent-rgb), 0.12);
+      border: 1px solid rgba(var(--accent-rgb), 0.24);
+      color: #bae6fd;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .glossary-card-body {
+      padding: 0 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .glossary-block {
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.07);
+      background: var(--panel-2);
+    }
+    .glossary-block.raw {
+      border-color: rgba(var(--accent-rgb), 0.18);
+      background: rgba(var(--accent-rgb), 0.08);
+    }
+    .glossary-block-label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .glossary-block.raw .glossary-block-label { color: #7dd3fc; }
+    .glossary-block-text {
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: var(--text);
+    }
+    .glossary-block-text p + p { margin-top: 8px; }
+    .glossary-block-text ul {
+      margin: 6px 0 0 18px;
+      color: var(--muted);
+    }
+    .glossary-block-text li + li { margin-top: 4px; }
+    .glossary-example {
+      font-style: italic;
+      color: #ddd6fe;
+      border-left: 3px solid rgba(var(--accent-rgb), 0.5);
+      padding-left: 10px;
+    }
+    .glossary-empty {
+      padding: 18px 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.82rem;
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.02);
+    }
+  </style>
+</head>
+<body>
+  <button class="app-menu-btn" id="appMenuBtn" aria-label="Open navigation menu" aria-expanded="false" aria-controls="appMenuPanel"><span class="bars"></span></button>
+  <div class="app-menu-overlay" id="appMenuOverlay"></div>
+  <aside class="app-menu-panel" id="appMenuPanel" aria-hidden="true">
+    <div id="referenceAppMenuShell"></div>
+  </aside>
+  <template id="referenceShellLinkFallback"><a href="rules.html"></a><a href="glossary.html"></a></template>
+  <div class="app">
+    <div class="header">
+      <div class="header-eyebrow">StarCraft TMG</div>
+      <div class="title">Rules Reference</div>
+      <div class="subtitle">Structured rules reference for quick in-game checks and phase reminders.</div>
+    </div>
+    <div class="content-view active" id="rulesView">
+      <div class="search-container">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" placeholder="Search rules..." id="rulesSearchInput">
+          <button class="clear-btn" id="rulesClearBtn">×</button>
+        </div>
+      </div>
+
+      <div class="quick-nav">
+        <a href="#overview" class="nav-btn">Overview</a>
+        <a href="#concepts" class="nav-btn">Concepts</a>
+        <a href="#phase-movement" class="nav-btn movement">Movement</a>
+        <a href="#phase-assault" class="nav-btn assault">Assault</a>
+        <a href="#phase-combat" class="nav-btn combat">Combat</a>
+        <a href="#phase-scoring" class="nav-btn scoring">Scoring</a>
+        <a href="#situations" class="nav-btn">Situations</a>
+        <a href="#mistakes" class="nav-btn">Mistakes</a>
+      </div>
+
+      <div id="rulesContainer"></div>
+
+      <div class="no-results" id="rulesNoResults" style="display: none;">
+        <div class="no-results-icon">🔍</div>
+        <div class="no-results-text">No rules found matching your search</div>
+      </div>
+    </div>
+
+    <div class="content-view" id="glossaryView">
+      <div class="search-container">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="search-input" placeholder="Search glossary..." id="glossarySearchInput">
+          <button class="clear-btn" id="glossaryClearBtn">×</button>
+        </div>
+      </div>
+
+      <div class="glossary-summary">
+        <div class="glossary-summary-copy">
+          <div class="glossary-summary-title">Rules terms in one place</div>
+          <div class="glossary-summary-meta">Each entry starts with the source-backed RAW text, then adds a quick-read explanation and a gameplay example when it helps clarify use.</div>
+        </div>
+        <div class="glossary-count-badge" id="glossaryCountBadge">72 Terms</div>
+      </div>
+      <div class="glossary-grid" id="glossaryGrid">
+        <div class="glossary-card" data-keywords="access point access-point part of a terrain that connects different elevation levels. models moving through an access point can change their elevation. part of a terrain that connects different elevation levels."><div class="glossary-card-head"><div class="glossary-card-name">ACCESS POINT</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>Part of a Terrain that connects different elevation levels. Models moving through an ACCESS POINT can change their elevation.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>Part of a terrain that connects different elevation levels.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if a model climbs through a doorway or ramp between levels, it is using an access point.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="active player active-player the player whose turn it is to act. this means the player currently taking actions."><div class="glossary-card-head"><div class="glossary-card-name">ACTIVE PLAYER</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>The player whose turn it is to act.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>This means the player currently taking actions.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if it is your activation and you are choosing actions, you are the active player.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="anti-evade anti-evade anti-evade (x) - when resolving an attack with this weapon against enemy units, the target unit suffers a -x modifier to its evade roll for this attack (part 8.7.4, step 4). anti-evade (x) - when resolving an attack with this weapon against enemy units, the target unit suffers a -x modifier to its evade roll for this attack."><div class="glossary-card-head"><div class="glossary-card-name">ANTI-EVADE</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>ANTI-EVADE (X) - When resolving an attack with this weapon against Enemy Units, the target Unit suffers a -X Modifier to its Evade Roll for this attack (Part 8.7.4, Step 4).</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>ANTI-EVADE (X) - When resolving an attack with this weapon against enemy units, the target unit suffers a -X Modifier to its Evade Roll for this attack.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if a weapon has ANTI-EVADE (1), the target makes its Evade roll one step worse for that attack.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="army slot army-slot army slots determine how many and what types of units may be included in an army. each army slot has a type: core, elite, support, air, or hero. every unit occupies a number of army slots of its designated type equal to its starting supply value.
+
+the faction card provides the initial pool of army slots. additional army slots are unlocked by purchasing tactical cards with vespene gas during army building (part 9.1.5). unused army slots are lost- they cannot be converted, exchanged, or carried forward. army slots determine how many and what types of units may be included in an army."><div class="glossary-card-head"><div class="glossary-card-name">ARMY SLOT</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>Army Slots determine how many and what types of Units may be included in an army. Each Army Slot has a type: Core, Elite, Support, Air, or Hero. Every Unit occupies a number of Army Slots of its designated type equal to its starting Supply Value.
+
+The Faction Card provides the initial pool of Army Slots. Additional Army Slots are unlocked by purchasing Tactical Cards with Vespene Gas during Army Building (Part 9.1.5). Unused Army Slots are lost- they cannot be converted, exchanged, or carried forward.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>Army Slots determine how many and what types of units may be included in an army.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if a situation would break this restriction, the action is not allowed unless another rule overrides it.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="available supply available-supply available supply is the amount of supply capacity remaining for new deployments. it equals the current supply pool minus the total current supply value of all friendly units on the battlefield (part 8.3.2).
+
+a unit may only be deployed from reserves if its current supply value is less than or equal to the available supply. at no point may the total current supply of a player&#39;s on-table units exceed the supply pool. units destroyed or reduced by casualties free up available supply for new arrivals. in the final round of the game, the supply pool becomes unlimited and available supply restrictions are lifted. available supply is the amount of supply capacity remaining for new deployments."><div class="glossary-card-head"><div class="glossary-card-name">AVAILABLE SUPPLY</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>Available Supply is the amount of Supply capacity remaining for new deployments. It equals the current Supply Pool minus the Total Current Supply Value of all Friendly Units on the battlefield (Part 8.3.2).
+
+A Unit may only be deployed from Reserves if its Current Supply Value is less than or equal to the Available Supply. At no point may the Total Current Supply of a player&#39;s on-table Units exceed the Supply Pool. Units Destroyed or reduced by casualties free up Available Supply for new arrivals. In the final Round of the game, the Supply Pool becomes unlimited and Available Supply restrictions are lifted.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>Available Supply is the amount of Supply capacity remaining for new deployments.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="blocking terrain blocking-terrain any terrain piece with an effective size of 1 or greater. blocking terrain obstructs line of sight according to the cover rules (part 7.1.1).
+
+whether a model may move through that terrain is determined separately by the movement rules, terrain size, access points, gap clearance, and any relevant terrain keywords. any terrain piece with an effective size of 1 or greater."><div class="glossary-card-head"><div class="glossary-card-name">BLOCKING TERRAIN</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>Any terrain piece with an Effective Size of 1 or greater. Blocking Terrain obstructs Line of Sight according to the Cover rules (Part 7.1.1).
+
+Whether a model may move through that terrain is determined separately by the movement rules, terrain Size, ACCESS POINTS, Gap Clearance, and any relevant terrain Keywords.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>Any terrain piece with an Effective Size of 1 or greater.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="buff buff buff [characteristic] (x) the unit gains a bonus of x to the specified characteristic until the end of the round.
+
+• target number characteristic (e.g. armour, hit): reduce the value by x (easier to roll).
+
+• value characteristic (e.g. speed, roa): increase the value by x. buff [characteristic] (x) the unit gains a bonus of x to the specified characteristic until the end of the round."><div class="glossary-card-head"><div class="glossary-card-name">BUFF</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>BUFF [Characteristic] (X) The Unit gains a bonus of X to the specified Characteristic until the End of the Round.
+
+• Target Number Characteristic (e.g. Armour, Hit): reduce the value by X (easier to roll).
+
+• Value Characteristic (e.g. Speed, RoA): increase the value by X.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>BUFF [Characteristic] (X) The unit gains a bonus of X to the specified Characteristic until the End of the Round.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if a unit gains BUFF Speed (2), it moves farther until the round ends.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="bulky bulky this weapon cannot be used to make a ranged attack while the unit is currently engaged (part 8.7.3). in simple terms: this weapon is restricted in when it can be used."><div class="glossary-card-head"><div class="glossary-card-name">BULKY</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>This weapon cannot be used to make a Ranged Attack while the Unit is currently Engaged (Part 8.7.3).</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>In simple terms: this weapon is restricted in when it can be used.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if the unit is already engaged, it cannot fire a Bulky ranged weapon.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="burrowed burrowed • a burrowed is classified as a status. • a burrowed is classified as a status."><div class="glossary-card-head"><div class="glossary-card-name">BURROWED</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>• A BURROWED is classified as a Status.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>• A BURROWED is classified as a Status.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if a Zerg unit gains Burrowed, it is now treated as having that status until something removes it.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="burst fire burst-fire burst fire y&quot; (x) when making a ranged attack against a target within y&quot; of the attacking model, increase this weapon’s roa by x for that attack. burst fire y&quot; (x) when making a ranged attack against a target within y&quot; of the attacking model, increase this weapon’s roa by x for that attack."><div class="glossary-card-head"><div class="glossary-card-name">BURST FIRE</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>BURST FIRE Y&quot; (X) When making a Ranged Attack against a target Within Y&quot; of the attacking model, increase this weapon’s RoA by X for that attack.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>BURST FIRE Y&quot; (X) When making a Ranged Attack against a target Within Y&quot; of the attacking model, increase this weapon’s RoA by X for that attack.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if the target is inside the listed short range, the weapon gains extra rate of attack dice.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="combat tags combat-tags combat tags are keywords printed on a unit card that identify a unit&#39;s physical nature and tactical class.
+
+ type tags: armoured, biological, light, mechanical, psionic, flying, and ground.
+
+• targeting: some weapons can fire only at specific combat tags (e.g., &quot;target: flying &quot;).
+
+• surge: a weapon&#39;s surge efficiency triggers only when the target has the combat tag listed in the weapon&#39;s surge type (part 8.7.4).
+
+• bonuses: abilities such as anti-evade (x) or pierce (x) often apply only against specific combat tags.
+
+note: the ground combat tag and the ground level elevation (part 8.5.3) are distinct concepts. a flying unit standing on the playmat is at ground level but does not have the ground combat tag. throughout these rules, ground in bold always refers to the combat tag. ground level always refers to elevation. combat tags are keywords printed on a unit card that identify a unit&#39;s physical nature and tactical class."><div class="glossary-card-head"><div class="glossary-card-name">COMBAT TAGS</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>Combat Tags are Keywords printed on a Unit Card that identify a Unit&#39;s physical nature and tactical class.
+
+ Type Tags: Armoured, Biological, Light, Mechanical, Psionic, Flying, and Ground.
+
+• Targeting: Some weapons can fire only at specific Combat Tags (e.g., &quot;Target: Flying &quot;).
+
+• Surge: A weapon&#39;s Surge efficiency triggers only when the target has the Combat Tag listed in the weapon&#39;s Surge Type (Part 8.7.4).
+
+• Bonuses: Abilities such as ANTI-EVADE (X) or PIERCE (X) often apply only against specific Combat Tags.
+
+Note: The Ground Combat Tag and the GROUND LEVEL elevation (Part 8.5.3) are distinct concepts. A Flying Unit standing on the playmat is at GROUND LEVEL but does not have the Ground Combat Tag. Throughout these rules, Ground in bold always refers to the Combat Tag. GROUND LEVEL always refers to elevation.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>Combat Tags are Keywords printed on a unit Card that identify a unit&#39;s physical nature and tactical class.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="concentrated fire concentrated-fire concentrated fire (x) attacks with this weapon may remove no more than x models as casualties. once x models have been removed, discard any remaining total damage. it is not recorded as a damage marker and does not carry over. concentrated fire (x) attacks with this weapon may remove no more than x models as casualties."><div class="glossary-card-head"><div class="glossary-card-name">CONCENTRATED FIRE</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>CONCENTRATED FIRE (X) Attacks with this weapon may remove no more than X models as casualties. Once X models have been removed, discard any remaining Total Damage. It is not recorded as a Damage Marker and does not carry over.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>CONCENTRATED FIRE (X) Attacks with this weapon may remove no more than X models as casualties.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: even if the attack rolls huge damage, it can only remove up to the listed number of models.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="controlling player controlling-player the player who commands a specific unit, model, or token. they make all decisions and roll all dice. certain abilities (e.g., neural parasite) can transfer control; the new controller then acts in every respect as though the unit were their own. the player who commands a specific unit, model, or token."><div class="glossary-card-head"><div class="glossary-card-name">CONTROLLING PLAYER</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>The player who commands a specific Unit, model, or Token. They make all decisions and roll all dice. Certain abilities (e.g., Neural Parasite) can transfer control; the new controller then acts in every respect as though the Unit were their own.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>The player who commands a specific unit, model, or Token.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="critical hit critical-hit critical hit (x) move x dice from the armour pool directly to the damage pool, bypassing armour. critical hit can never move more dice than are in the armour pool. critical hit (x) move x dice from the armour pool directly to the damage pool, bypassing armour."><div class="glossary-card-head"><div class="glossary-card-name">CRITICAL HIT</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>CRITICAL HIT (X) Move X dice from the Armour Pool directly to the Damage Pool, bypassing Armour. CRITICAL HIT can never move more dice than are in the Armour Pool.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>CRITICAL HIT (X) Move X dice from the Armour Pool directly to the Damage Pool, bypassing Armour.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if CRITICAL HIT (1) triggers, one die skips Armour and goes straight into Damage.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="current supply value current-supply-value the current supply value of a unit is its supply value at this moment, based on the number of models remaining in the unit as shown on the supply profile (part 6.1). update the current supply value immediately whenever a casualty reduces the model count into a lower bracket.
+
+the current supply value is referenced when checking whether a unit may be deployed from reserves (part 8.3.2), when determining mission marker control (part 8.9.1), when evaluating tactical mass for disengage (part 8.5.4), and when calculating victory points for supply-based scoring conditions. the current supply value of a unit is its supply value at this moment, based on the number of models remaining in the unit as shown on the supply profile."><div class="glossary-card-head"><div class="glossary-card-name">CURRENT SUPPLY VALUE</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>The Current Supply Value of a Unit is its Supply Value at this moment, based on the number of models remaining in the Unit as shown on the Supply Profile (Part 6.1). Update the Current Supply Value immediately whenever a casualty reduces the model count into a lower bracket.
+
+The Current Supply Value is referenced when checking whether a Unit may be deployed from Reserves (Part 8.3.2), when determining Mission Marker Control (Part 8.9.1), when evaluating Tactical Mass for Disengage (Part 8.5.4), and when calculating Victory Points for Supply-based scoring conditions.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>The Current Supply Value of a unit is its Supply Value at this moment, based on the number of models remaining in the unit as shown on the Supply Profile.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="debuff debuff debuff [characteristic] (x) the unit suffers a penalty of x to the specified characteristic until the end of the round.
+
+• target number characteristic: increase the value by x (harder to roll).
+
+• value characteristic: decrease the value by x (minimum 0). debuff [characteristic] (x) the unit suffers a penalty of x to the specified characteristic until the end of the round."><div class="glossary-card-head"><div class="glossary-card-name">DEBUFF</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>DEBUFF [Characteristic] (X) The Unit suffers a penalty of X to the specified Characteristic until the End of the Round.
+
+• Target Number Characteristic: increase the value by X (harder to roll).
+
+• Value Characteristic: decrease the value by X (minimum 0).</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>DEBUFF [Characteristic] (X) The unit suffers a penalty of X to the specified Characteristic until the End of the Round.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if a unit suffers DEBUFF Hit (1), its attack rolls become one step worse until the round ends.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="displacement displacement the leading model may end a move overlapping this token or unit (overrides part 7.3.1).
+
+if the leading model ends any move, deploy, run, charge, disengage, close ranks or special ability move overlapping this token or model, the controlling player of the leading model immediately set it in base-to-base contact with the leading model. if base-to-base is not possible, set it as close as possible. the leading model may end a move overlapping this token or unit (overrides part 7.3.1)."><div class="glossary-card-head"><div class="glossary-card-name">DISPLACEMENT</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>The Leading Model may end a move Overlapping this Token or Unit (overrides Part 7.3.1).
+
+If the Leading Model ends any Move, Deploy, Run, Charge, Disengage, Close Ranks or Special Ability move Overlapping this Token or model, the controlling player of the Leading Model immediately set it in Base-to-Base contact with the Leading Model. If Base-to-Base is not possible, set it as close as possible.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>The leading model may end a move Overlapping this Token or unit (overrides Part 7.3.1).</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="dodge dodge dodge (x) when this unit is targeted by an attack, reduce the number of dice moved from the armour pool to the damage pool by surge or critical hit by x (minimum 0). apply during the resolve surge step. dodge (x) when this unit is targeted by an attack, reduce the number of dice moved from the armour pool to the damage pool by surge or critical hit by x (minimum 0)."><div class="glossary-card-head"><div class="glossary-card-name">DODGE</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>DODGE (X) When this Unit is targeted by an attack, reduce the number of dice moved from the Armour Pool to the Damage Pool by Surge or CRITICAL HIT by X (minimum 0). Apply during the Resolve Surge step.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>DODGE (X) When this unit is targeted by an attack, reduce the number of dice moved from the Armour Pool to the Damage Pool by Surge or CRITICAL HIT by X (minimum 0).</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if Surge would push 2 dice into Damage and the unit has DODGE (1), only 1 die gets through from that effect.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="effective size effective-size a model&#39;s effective size is equal to its size characteristic plus the size of any terrain it is standing on (part 7.1.2).
+
+a model at ground level has an effective size equal to its own size characteristic only. a model on high ground (size 3+) or mid ground (size 1–2) adds the terrain&#39;s size to its own. terrain pieces set on elevated surfaces stack in the same way- a terrain piece&#39;s effective size equals its own size plus the size of the terrain it stands on.
+
+ effective size determines which terrain blocks line of sight through full cover and direct cover (part 7.1.1). flying models are treated as having an effective size higher than any terrain piece on the table for cover purposes (part 7.1.4). a model&#39;s effective size is equal to its size characteristic plus the size of any terrain it is standing on."><div class="glossary-card-head"><div class="glossary-card-name">EFFECTIVE SIZE</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A model&#39;s Effective Size is equal to its Size characteristic plus the Size of any terrain it is standing on (Part 7.1.2).
+
+A model at GROUND LEVEL has an Effective Size equal to its own Size characteristic only. A model on HIGH GROUND (Size 3+) or MID GROUND (Size 1–2) adds the terrain&#39;s Size to its own. Terrain pieces set on elevated surfaces stack in the same way- a terrain piece&#39;s Effective Size equals its own Size plus the Size of the terrain it stands on.
+
+ Effective Size determines which terrain blocks Line of Sight through Full Cover and Direct Cover (Part 7.1.1). Flying models are treated as having an Effective Size higher than any terrain piece on the table for Cover purposes (Part 7.1.4).</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>A model&#39;s Effective Size is equal to its Size characteristic plus the Size of any terrain it is standing on.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="enemy enemy all units, tokens, and cards belonging to the opponent are enemies. in team games, all opposing players&#39; units, tokens, and cards are enemies. a unit may never target a friendly unit with an attack unless a rule explicitly states otherwise. enemy is the opposite of friendly and is referenced throughout the rules to determine valid targets, engagement, and mission marker contests. all units, tokens, and cards belonging to the opponent are enemies."><div class="glossary-card-head"><div class="glossary-card-name">ENEMY</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>All Units, Tokens, and cards belonging to the opponent are Enemies. In team games, all opposing players&#39; Units, Tokens, and cards are Enemies. A Unit may never target a Friendly Unit with an attack unless a rule explicitly states otherwise. Enemy is the opposite of Friendly and is referenced throughout the rules to determine valid targets, Engagement, and Mission Marker contests.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>All units, Tokens, and cards belonging to the opponent are Enemies.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="engaged engaged a ground unit is engaged when any of its models is within 1&quot; (engagement range) of any model in an enemy ground unit, provided the following conditions are met (part 7.2.1):
+
+• combat tags match: ground models engage only ground models. flying models cannot be engaged by any model.
+
+• terrain does not block: size 2+ terrain between the models prevents engagement, even if they are within 1&quot;. models on high ground cannot engage models at ground level, and vice versa.
+
+when any model in a unit is engaged, the entire unit is considered engaged. an engaged unit cannot perform a standard move - it must disengage (part 8.5.4) or hold. engaged units are also subject to restrictions on ranged attacks (part 8.7.3). a ground unit is engaged when any of its models is within 1&quot; (engagement range) of any model in an enemy ground unit, provided the following conditions are met : • combat tags match: ground models engage only ground models."><div class="glossary-card-head"><div class="glossary-card-name">ENGAGED</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A Ground Unit is Engaged when any of its models is Within 1&quot; (Engagement Range) of any model in an Enemy Ground Unit, provided the following conditions are met (Part 7.2.1):
+
+• Combat Tags match: Ground models Engage only Ground models. Flying models cannot be Engaged by any model.
+
+• Terrain does not block: Size 2+ terrain between the models prevents Engagement, even if they are Within 1&quot;. Models on HIGH GROUND cannot Engage models at GROUND LEVEL, and vice versa.
+
+When any model in a Unit is Engaged, the entire Unit is considered Engaged. An Engaged Unit cannot perform a standard Move - it must Disengage (Part 8.5.4) or Hold. Engaged Units are also subject to restrictions on Ranged Attacks (Part 8.7.3).</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>A Ground unit is Engaged when any of its models is Within 1&quot; (Engagement Range) of any model in an Enemy Ground unit, provided the following conditions are met : • Combat Tags match: Ground models Engage only Ground models.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if a situation would break this restriction, the action is not allowed unless another rule overrides it.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="engagement range engagement-range the engagement range extends 1&quot; horizontally from any model&#39;s base. when two enemy ground models are within each other&#39;s engagement range, they are engaged (part 7.2).
+
+ engagement range is measured horizontally from a top-down perspective, ignoring vertical height (part 4.1). it is referenced when resolving move restrictions (part 8.5.3), disengage (part 8.5.4), charge (part 8.6.2), the fighting rank (part 8.8.1), and place effects. melee weapons list e as their range, indicating they may only strike targets within the engagement range. the engagement range extends 1&quot; horizontally from any model&#39;s base."><div class="glossary-card-head"><div class="glossary-card-name">ENGAGEMENT RANGE</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>The Engagement Range extends 1&quot; horizontally from any model&#39;s base. When two Enemy Ground models are Within each other&#39;s Engagement Range, they are Engaged (Part 7.2).
+
+ Engagement Range is measured horizontally from a top-down perspective, ignoring vertical height (Part 4.1). It is referenced when resolving Move restrictions (Part 8.5.3), Disengage (Part 8.5.4), Charge (Part 8.6.2), the Fighting Rank (Part 8.8.1), and PLACE effects. Melee weapons list E as their Range, indicating they may only strike targets Within the Engagement Range.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>The Engagement Range extends 1&quot; horizontally from any model&#39;s base.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="entry edge entry-edge the table edge assigned to a player by the deployment card. units enter the battlefield from this edge when deploying from reserves. the table edge assigned to a player by the deployment card."><div class="glossary-card-head"><div class="glossary-card-name">ENTRY EDGE</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>The table edge assigned to a player by the Deployment Card. Units enter the battlefield from this edge when deploying from Reserves.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>The table edge assigned to a player by the Deployment Card.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: when a reserve unit deploys, it comes in from its assigned entry edge.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="faction tags faction-tags faction tags are keywords printed on unit cards, tactical cards, and faction cards that identify allegiance.
+
+• race tags: terran, zerg, protoss.
+
+• sub- faction tags: specific broods or organisations, e.g., kerrigan &#39;s swarm, raynor&#39;s raiders.
+
+• function: during army building, a player may include only units and tactical cards whose faction tags all appear on the chosen faction card. if even one tag on the unit or tactical card does not appear on the faction card, that card cannot be included. a unit with fewer tags than the faction card is permitted- it only requires its own tags to be present (part 9.1.2). faction tags are keywords printed on unit cards, tactical cards, and faction cards that identify allegiance."><div class="glossary-card-head"><div class="glossary-card-name">FACTION TAGS</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>Faction Tags are Keywords printed on Unit Cards, Tactical Cards, and Faction Cards that identify allegiance.
+
+• Race Tags: Terran, Zerg, Protoss.
+
+• Sub- Faction Tags: Specific broods or organisations, e.g., Kerrigan &#39;s Swarm, Raynor&#39;s Raiders.
+
+• Function: During Army Building, a player may include only Units and Tactical Cards whose Faction Tags all appear on the chosen Faction Card. If even one tag on the Unit or Tactical Card does not appear on the Faction Card, that card cannot be included. A Unit with fewer tags than the Faction Card is permitted- it only requires its own tags to be present (Part 9.1.2).</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>Faction Tags are Keywords printed on unit Cards, Tactical Cards, and Faction Cards that identify allegiance.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if a situation would break this restriction, the action is not allowed unless another rule overrides it.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="fighting rank fighting-rank a model is in the fighting rank if it is within the engagement range (1&quot;) of an enemy model. models in the fighting rank may strike with their combat phase weapons. see part 8.8.1, step 2. a model is in the fighting rank if it is within the engagement range (1&quot;) of an enemy model."><div class="glossary-card-head"><div class="glossary-card-name">FIGHTING RANK</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A model is in the Fighting Rank if it is Within the Engagement Range (1&quot;) of an Enemy model. Models in the Fighting Rank may strike with their Combat Phase weapons. See Part 8.8.1, Step 2.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>A model is in the Fighting Rank if it is Within the Engagement Range (1&quot;) of an Enemy model.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: a model within 1 inch of an enemy is in the fighting rank and can strike in Combat.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="first player marker first-player-marker a physical token used to track which player has initiative. at the start of the game, the winner of the roll-off (part 3.2) assigns the first player marker to either player for round 1. the holder of the first player marker chooses which player activates first at the start of each phase. the marker changes hands in two ways: the first player to pass during phase 1 or phase 2 takes the first player marker for the following phase, and at the end of phase 4 the marker is awarded to the player with fewer victory points (part 8.9.6). if victory points are tied, both players roll-off and the winner takes the marker. this is the token that shows who currently has initiative."><div class="glossary-card-head"><div class="glossary-card-name">FIRST PLAYER MARKER</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A physical Token used to track which player has initiative. At the start of the game, the winner of the Roll-Off (Part 3.2) assigns the First Player Marker to either player for Round 1. The holder of the First Player Marker chooses which player activates first at the start of each Phase. The Marker changes hands in two ways: the first player to Pass during Phase 1 or Phase 2 takes the First Player Marker for the following Phase, and at the end of Phase 4 the Marker is awarded to the player with fewer Victory Points (Part 8.9.6). If Victory Points are tied, both players Roll-Off and the winner takes the Marker.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>This is the token that shows who currently has initiative.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: when someone passes first in Movement or Assault, the marker can change hands for the next phase.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="flying flying flying units trade board control (no mission markers, no melee) for mobility and immunity to terrain.
+
+• a flying unit ignores all terrain for movement purposes. the leading model moves point-to-point, measuring horizontally. other models may pass through a flying model’s base as if it were not there, and vice versa.
+
+• a flying unit is never engaged. ground models cannot engage flying models, and flying models cannot engage other flying models. a flying unit must end its movement at least 1&quot; away from all enemy flying units.
+
+• flying model, ignore the full cover rule. direct cover and the elevation dead zone rules still apply. assume that flying units ’ effective size is higher than the effective size of any terrain piece on the table.
+
+• a flying unit does not benefit from high ground cover (part 7.1.3).
+
+• a flying unit cannot control or contest mission markers (overrides parts 6.2 and 8.9.1).
+
+• a flying unit cannot charge or be charged.
+
+• a flying unit cannot participate in the combat phase (part 8.8).
+
+• a flying unit ignores elevation. it does not use access points. for cover and line of sight purposes, treat a flying unit&#39;s effective size as higher than the effective size of any terrain piece on the table (part 7.1.4). terrain does not contribute to a flying model&#39;s effective size.
+
+• a flying unit moving over grass does not destroy the grass terrain piece. if a flying unit ends on a grass terrain piece, it is removed as normal. flying units trade board control (no mission markers, no melee) for mobility and immunity to terrain."><div class="glossary-card-head"><div class="glossary-card-name">FLYING</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>Flying Units trade board control (no Mission Markers, no melee) for mobility and immunity to terrain.
+
+• A Flying Unit ignores all terrain for movement purposes. The Leading Model moves point-to-point, measuring horizontally. Other models may pass through a Flying model’s base as if it were not there, and vice versa.
+
+• A Flying Unit is never Engaged. Ground models cannot Engage Flying models, and Flying models cannot Engage other Flying models. A Flying Unit must end its movement at least 1&quot; away from all Enemy Flying Units.
+
+• Flying model, ignore the Full Cover rule. Direct Cover and the Elevation Dead Zone rules still apply. Assume that Flying Units ’ Effective Size is higher than the Effective Size of any terrain piece on the table.
+
+• A Flying Unit does not benefit from HIGH GROUND Cover (Part 7.1.3).
+
+• A Flying Unit cannot Control or Contest Mission Markers (overrides Parts 6.2 and 8.9.1).
+
+• A Flying Unit cannot Charge or be Charged.
+
+• A Flying Unit cannot participate in the Combat Phase (Part 8.8).
+
+• A Flying Unit ignores elevation. It does not use Access Points. For Cover and Line of Sight purposes, treat a Flying unit&#39;s Effective Size as higher than the Effective Size of any terrain piece on the table (Part 7.1.4). Terrain does not contribute to a Flying model&#39;s Effective Size.
+
+• A Flying Unit moving over Grass does not destroy the Grass terrain piece. If a Flying Unit ends on a Grass terrain piece, it is removed as normal.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>Flying units trade board control (no mission markers, no melee) for mobility and immunity to terrain.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: a Flying unit can move over terrain, but it cannot control mission markers or fight in Combat.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="friendly friendly all units, tokens, and cards belonging to the controlling player are friendly to one another. in team games, all teammates&#39; units, tokens, and cards are also friendly. a unit&#39;s own models are always friendly to it. friendly is the opposite of enemy and is used throughout the rules to determine targeting restrictions, movement interactions, and ability eligibility. all units, tokens, and cards belonging to the controlling player are friendly to one another."><div class="glossary-card-head"><div class="glossary-card-name">FRIENDLY</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>All Units, Tokens, and cards belonging to the Controlling Player are Friendly to one another. In team games, all teammates&#39; Units, Tokens, and cards are also Friendly. A Unit&#39;s own models are always Friendly to it. Friendly is the opposite of Enemy and is used throughout the rules to determine targeting restrictions, movement interactions, and ability eligibility.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>All units, Tokens, and cards belonging to the Controlling Player are Friendly to one another.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="grass grass a terrain piece with a size of 2 that follows special rules. unlike other size 2 terrain, grass does not block movement but does block line of sight, following the standard cover rules (part 7.1.1).
+
+ grass is destroyed by the passage of war. if a leading model ’s path of travel passes through or any model of a unit ends on a grass terrain piece during any movement action (move, deploy, run, charge, disengage or close ranks), that grass terrain piece is immediately removed from the game. it does not return during cleanup &amp; refresh and cannot be replaced by any means.
+
+a flying unit moving over grass does not destroy the grass terrain piece. flying models pass above the terrain, not through it. if any model of a flying unit ends on a grass terrain piece, it is removed as normal. this term explains a terrain rule that affects movement, line of sight, or both."><div class="glossary-card-head"><div class="glossary-card-name">GRASS</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A terrain piece with a Size of 2 that follows special rules. Unlike other Size 2 terrain, Grass does not block movement but does block Line of Sight, following the standard Cover rules (Part 7.1.1).
+
+ Grass is destroyed by the passage of war. If a Leading Model ’s path of travel passes through or any model of a Unit ends on a Grass terrain piece during any movement action (Move, Deploy, Run, Charge, Disengage or Close Ranks), that Grass terrain piece is immediately removed from the game. It does not return during Cleanup &amp; Refresh and cannot be replaced by any means.
+
+A Flying Unit moving over Grass does not destroy the Grass terrain piece. Flying models pass above the terrain, not through it. If any model of a Flying Unit ends on a Grass terrain piece, it is removed as normal.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>This term explains a terrain rule that affects movement, line of sight, or both.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if a situation would break this restriction, the action is not allowed unless another rule overrides it.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="heal heal heal (x) remove x points of accumulated damage from the unit (reduce its damage marker accordingly). heal cannot return destroyed models - it only reduces existing damage. see also: respawn. heal (x) remove x points of accumulated damage from the unit (reduce its damage marker accordingly)."><div class="glossary-card-head"><div class="glossary-card-name">HEAL</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>HEAL (X) Remove X points of accumulated Damage from the Unit (reduce its Damage Marker accordingly). HEAL cannot return Destroyed models - it only reduces existing Damage. See also: RESPAWN.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>HEAL (X) Remove X points of accumulated Damage from the unit (reduce its Damage Marker accordingly).</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if a unit has 2 damage marked and resolves HEAL (1), it drops to 1 damage marked.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="hidden hidden this unit cannot be selected as the target of a ranged attack or any los-requiring special ability unless the acting model is within 4&quot; of it. a hidden unit is immune to the impact keyword. a hidden unit may make an evade roll against every attack targeting it. in simple terms: this places a hard restriction on what the unit can do."><div class="glossary-card-head"><div class="glossary-card-name">HIDDEN</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>This Unit cannot be selected as the target of a Ranged Attack or any LoS-requiring Special Ability unless the acting model is Within 4&quot; of it. A HIDDEN Unit is immune to the IMPACT Keyword. A HIDDEN Unit may make an Evade Roll against every attack targeting it.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>In simple terms: this places a hard restriction on what the unit can do.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if the attacker is farther than 4 inches away, it usually cannot target a Hidden unit.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="hits hits hits x (y) the affected unit suffers x automatic hits. set x dice directly into the armour pool and proceed immediately to armour rolls (part 8.7.4, steps 3–4). treat the damage characteristic as y. these hits do not generate surge. hits x (y) the affected unit suffers x automatic hits."><div class="glossary-card-head"><div class="glossary-card-name">HITS</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>HITS X (Y) The affected Unit suffers X automatic hits. Set X dice directly into the Armour Pool and proceed immediately to Armour Rolls (Part 8.7.4, Steps 3–4). Treat the Damage characteristic as Y. These hits do not generate Surge.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>HITS X (Y) The affected unit suffers X automatic hits.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: HITS 2 means 2 dice go straight into the Armour Pool before armour rolls are made.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="impact impact impact (x) y immediately after this unit completes a successful charge, check every model in the fighting rank or supporting rank. for each eligible model, generate x impact dice:
+
+• if the model is in the fighting rank or supporting rank against only one enemy unit, all x dice go to that unit.
+
+• if the model is in the fighting rank or supporting rank against multiple enemy units, the controlling player may split the dice between those units.
+
+roll the allocated dice for each target unit separately (this is the impact hit roll). for each result of y or higher, set 1 die into the target’s armour pool. proceed immediately to armour rolls. these hits do not generate surge and treat damage as 1. impact (x) y immediately after this unit completes a successful charge, check every model in the fighting rank or supporting rank."><div class="glossary-card-head"><div class="glossary-card-name">IMPACT</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>IMPACT (X) Y Immediately after this Unit completes a successful Charge, check every model in the Fighting Rank or Supporting Rank. For each eligible model, generate X Impact Dice:
+
+• If the model is in the Fighting Rank or Supporting Rank against only one Enemy Unit, all X dice go to that Unit.
+
+• If the model is in the Fighting Rank or Supporting Rank against multiple Enemy Units, the controlling player may split the dice between those Units.
+
+Roll the allocated dice for each target Unit separately (this is the Impact Hit Roll). For each result of Y or higher, set 1 die into the target’s Armour Pool. Proceed immediately to Armour Rolls. These hits do not generate Surge and treat Damage as 1.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>IMPACT (X) Y Immediately after this unit completes a successful Charge, check every model in the Fighting Rank or Supporting Rank.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: after a successful charge, each eligible model rolls its Impact dice before normal Combat attacks.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="impassable terrain impassable-terrain a terrain piece is impassable if it has no access point connecting it to an adjacent elevation level. models cannot move through, onto, or across impassable terrain, and no model may end its movement overlapping it. terrains of sizes 0 and 1 are never considered impassable terrain. this term explains a terrain rule that affects movement, line of sight, or both."><div class="glossary-card-head"><div class="glossary-card-name">IMPASSABLE TERRAIN</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A terrain piece is Impassable if it has no Access Point connecting it to an adjacent elevation level. Models cannot move through, onto, or across IMPASSABLE TERRAIN, and no model may end its movement overlapping it. Terrains of sizes 0 and 1 are never considered IMPASSABLE TERRAIN.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>This term explains a terrain rule that affects movement, line of sight, or both.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if a situation would break this restriction, the action is not allowed unless another rule overrides it.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="indirect fire indirect-fire ranged attacks with this weapon may ignore line of sight when selecting a target and resolving damage. the target must still be within range. if the target is not visible, it may make an evade roll against this attack. ranged attacks with this weapon may ignore line of sight when selecting a target and resolving damage."><div class="glossary-card-head"><div class="glossary-card-name">INDIRECT FIRE</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>Ranged Attacks with this weapon may ignore Line of Sight when selecting a target and resolving Damage. The target must still be Within Range. If the target is not Visible, it may make an Evade Roll against this attack.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>Ranged Attacks with this weapon may ignore Line of Sight when selecting a target and resolving Damage.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="instant instant enemy units cannot declare or resolve reaction abilities in response to attacks made with this weapon. enemy units cannot declare or resolve reaction abilities in response to attacks made with this weapon."><div class="glossary-card-head"><div class="glossary-card-name">INSTANT</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>Enemy Units cannot declare or resolve Reaction abilities in response to attacks made with this weapon.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>enemy units cannot declare or resolve Reaction abilities in response to attacks made with this weapon.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if a situation would break this restriction, the action is not allowed unless another rule overrides it.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="large (x) large-x large (x) when this unit’s leading model moves, it may pass through physical gaps at least x&quot; wide, regardless of its base size. large (x) when this unit’s leading model moves, it may pass through physical gaps at least x&quot; wide, regardless of its base size."><div class="glossary-card-head"><div class="glossary-card-name">LARGE (X)</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>LARGE (X) When this Unit’s Leading Model moves, it may pass through physical gaps at least X&quot; wide, regardless of its base size.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>LARGE (X) When this unit’s leading model moves, it may pass through physical gaps at least X&quot; wide, regardless of its base size.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="leading model leading-model the leading model is a temporary reference point used to execute a unit&#39;s movement. whenever a unit performs a move, deploy, run, charge, disengage, close ranks, or any action that instructs the unit to nominate a leading model, the controlling player selects one model in the unit.
+
+ move the leading model first, measuring its exact path. then set the remaining models in valid coherency around the leading model &#39;s new position (part 4.4). the leading model nomination ends once the action resolves. the leading model determines the unit&#39;s gap clearance category and interacts with terrain restrictions (part 4.6). the leading model is a temporary reference point used to execute a unit&#39;s movement."><div class="glossary-card-head"><div class="glossary-card-name">LEADING MODEL</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>The Leading Model is a temporary reference point used to execute a Unit&#39;s movement. Whenever a Unit performs a Move, Deploy, Run, Charge, Disengage, Close Ranks, or any action that instructs the Unit to nominate a Leading Model, the Controlling Player selects one model in the Unit.
+
+ Move the Leading Model first, measuring its exact path. Then set the remaining models in valid Coherency around the Leading Model &#39;s new position (Part 4.4). The Leading Model nomination ends once the action resolves. The Leading Model determines the Unit&#39;s Gap Clearance category and interacts with terrain restrictions (Part 4.6).</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>The leading model is a temporary reference point used to execute a unit&#39;s movement.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="line of sight (los) line-of-sight-los line of sight determines what a model can see and, by extension, what it can target with attacks and abilities.
+
+all line of sight checks are resolved from a 2d top-down perspective, looking directly down at the battlefield from above. to check whether a model can see a target, trace an imaginary straight line from any part of the acting model&#39;s base to any part of the target model&#39;s base. vertical height is never factored into the trace.
+
+if the trace does not pass through any blocking terrain (any terrain piece with an effective size of 1 or greater), the target is visible. no further checks are required.
+
+if the trace passes through blocking terrain, the target is not automatically hidden. apply the cover rules (part 7.1.1) to determine whether that terrain actually blocks the line of sight:
+
+• full cover: the terrain&#39;s effective size is equal to or greater than the effective size of both the attacker and the target. line of sight is blocked.
+
+• direct cover: the trace passes through a terrain piece, and either the attacker or the target is within 1&quot; of that terrain, provided the terrain&#39;s effective size is equal to or greater than the effective size of the model that is within 1&quot;. line of sight is blocked. exception: if both the attacker and the target are within 1&quot; of the same terrain piece and within 3&quot; of each other, resolve line of sight normally.
+
+• elevation dead zone: a model on high ground (size 3+) cannot see a model at ground level that is within 1&quot; of the base of the same terrain piece, and vice versa. the same close quarters exception applies.
+
+each terrain piece is assessed independently. terrain pieces do not combine their effective size or proximity. if no single terrain piece meets the requirements for full cover or direct cover, line of sight is not blocked regardless of how many terrain pieces the trace passes through.
+
+a terrain piece&#39;s footprint is defined by its physical base or outermost edges viewed from above. gaps, windows, doorways, and open interiors within the footprint do block the line of sight unless players agree otherwise during battlefield setup (part 7.1).
+
+ flying models ignore the full cover rule. direct cover and the elevation dead zone still apply. treat a flying model&#39;s effective size as higher than the effective size of any terrain piece on the table (part 7.1.4).
+
+ line of sight is reciprocal: if model a can see model b, model b can see model a through the same trace. line of sight determines what a model can see and, by extension, what it can target with attacks and abilities."><div class="glossary-card-head"><div class="glossary-card-name">LINE OF SIGHT (LoS)</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>Line of Sight determines what a model can see and, by extension, what it can target with attacks and abilities.
+
+All Line of Sight checks are resolved from a 2D top-down perspective, looking directly down at the battlefield from above. To check whether a model can see a target, trace an imaginary straight line from any part of the acting model&#39;s base to any part of the target model&#39;s base. Vertical height is never factored into the trace.
+
+If the trace does not pass through any Blocking Terrain (any terrain piece with an Effective Size of 1 or greater), the target is Visible. No further checks are required.
+
+If the trace passes through Blocking Terrain, the target is not automatically hidden. Apply the Cover rules (Part 7.1.1) to determine whether that terrain actually blocks the Line of Sight:
+
+• Full Cover: The terrain&#39;s Effective Size is equal to or greater than the Effective Size of both the attacker and the target. Line of Sight is blocked.
+
+• Direct Cover: The trace passes through a terrain piece, and either the attacker or the target is Within 1&quot; of that terrain, provided the terrain&#39;s Effective Size is equal to or greater than the Effective Size of the model that is Within 1&quot;. Line of Sight is blocked. Exception: If both the attacker and the target are Within 1&quot; of the same terrain piece and Within 3&quot; of each other, resolve Line of Sight normally.
+
+• Elevation Dead Zone: A model on HIGH GROUND (Size 3+) cannot see a model at GROUND LEVEL that is Within 1&quot; of the base of the same terrain piece, and vice versa. The same Close Quarters exception applies.
+
+Each terrain piece is assessed independently. Terrain pieces do not combine their Effective Size or proximity. If no single terrain piece meets the requirements for Full Cover or Direct Cover, Line of Sight is not blocked regardless of how many terrain pieces the trace passes through.
+
+A terrain piece&#39;s footprint is defined by its physical base or outermost edges viewed from above. Gaps, windows, doorways, and open interiors within the footprint do block the Line of Sight unless players agree otherwise during Battlefield Setup (Part 7.1).
+
+ Flying models ignore the Full Cover rule. Direct Cover and the Elevation Dead Zone still apply. Treat a Flying model&#39;s Effective Size as higher than the Effective Size of any terrain piece on the table (Part 7.1.4).
+
+ Line of Sight is reciprocal: if Model A can see Model B, Model B can see Model A through the same trace.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>Line of Sight determines what a model can see and, by extension, what it can target with attacks and abilities.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if a situation would break this restriction, the action is not allowed unless another rule overrides it.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="locked in locked-in locked in (x) when making a ranged attack with this weapon, add x to its roa if the target unit has stationary status. locked in (x) when making a ranged attack with this weapon, add x to its roa if the target unit has stationary status."><div class="glossary-card-head"><div class="glossary-card-name">LOCKED IN</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>LOCKED IN (X) When making a Ranged Attack with this weapon, add X to its RoA if the target Unit has Stationary Status.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>LOCKED IN (X) When making a Ranged Attack with this weapon, add X to its RoA if the target unit has Stationary Status.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: check this keyword at the moment the ranged attack is declared and resolved.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="long range long-range long range (x) the maximum range of this weapon increases to x&quot;.
+
+measure each attacking model’s distance to the target individually:
+
+• within normal profile range: attack resolves normally.
+
+• beyond profile range but within x&quot;: the model suffers a -1 modifier to its hit roll.
+
+if a batch contains models at both standard and long range, generate the total dice but roll the two groups separately to account for different hit target numbers. long range (x) the maximum range of this weapon increases to x&quot;."><div class="glossary-card-head"><div class="glossary-card-name">LONG RANGE</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>LONG RANGE (X) The maximum Range of this weapon increases to X&quot;.
+
+Measure each attacking model’s distance to the target individually:
+
+• Within normal profile Range: attack resolves normally.
+
+• Beyond profile Range but Within X&quot;: the model suffers a -1 Modifier to its Hit roll.
+
+If a Batch contains models at both Standard and Long Range, generate the total dice but roll the two groups separately to account for different Hit Target Numbers.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>LONG RANGE (X) The maximum Range of this weapon increases to X&quot;.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="mission markers mission-markers numbered markers set on the battlefield during setup at coordinates shown on the deployment card. each marker is 32mm in diameter and has two sides: activated or deactivated. markers 1 &amp; 3 are red, markers 2 &amp; 4 are blue, and marker 5 is neutral.
+
+ mission markers are the primary scoring mechanism. at the end of each round, players determine control of each marker by comparing the total current supply value of their eligible contesting units (part 8.9.1). a unit may contest a mission marker only if it is on the battlefield, in coherency, and has at least one model within 3&quot; with line of sight to the marker on the same elevation. flying units and burrowed units cannot contest or control mission markers.
+
+control is sticky - once a player controls a marker, it remains under their control until the opponent reclaims it with a higher contesting supply total. a tied result never transfers control. numbered markers set on the battlefield during setup at coordinates shown on the deployment card."><div class="glossary-card-head"><div class="glossary-card-name">MISSION MARKERS</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>Numbered Markers set on the battlefield during Setup at coordinates shown on the Deployment Card. Each Marker is 32mm in diameter and has two sides: Activated or Deactivated. Markers 1 &amp; 3 are Red, Markers 2 &amp; 4 are Blue, and Marker 5 is Neutral.
+
+ Mission Markers are the primary scoring mechanism. At the end of each Round, players determine Control of each Marker by comparing the Total Current Supply Value of their eligible contesting Units (Part 8.9.1). A Unit may Contest a Mission Marker only if it is on the battlefield, In Coherency, and has at least one model Within 3&quot; with Line of Sight to the Marker on the same elevation. Flying Units and BURROWED Units cannot Contest or Control Mission Markers.
+
+Control is Sticky - once a player Controls a Marker, it remains under their control until the opponent reclaims it with a higher contesting Supply total. A tied result never transfers control.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>Numbered Markers set on the battlefield during Setup at coordinates shown on the Deployment Card.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if a situation would break this restriction, the action is not allowed unless another rule overrides it.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="modifier modifier a modifier adjusts the target number of a roll. apply all modifiers before rolling (part 3.4).
+
+• +x modifier: makes the roll easier by reducing the target number by x.
+
+• -x modifier: makes the roll harder by increasing the target number by x.
+
+ modifiers from different named sources are cumulative unless otherwise stated. a target number can never be modified below 2+ or above 6+. modifiers adjust the target number, not the dice result. a natural roll of 6 always succeeds and a natural roll of 1 always fails, regardless of modifiers (part 3.6).
+
+a modifier is distinct from a fixed addition (part 3.5), which generates a value rather than adjusting a target number. a modifier adjusts the target number of a roll."><div class="glossary-card-head"><div class="glossary-card-name">MODIFIER</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A Modifier adjusts the Target Number of a roll. Apply all Modifiers before rolling (Part 3.4).
+
+• +X Modifier: Makes the roll easier by reducing the Target Number by X.
+
+• -X Modifier: Makes the roll harder by increasing the Target Number by X.
+
+ Modifiers from different named sources are cumulative unless otherwise stated. A Target Number can never be modified below 2+ or above 6+. Modifiers adjust the Target Number, not the dice result. A natural roll of 6 always succeeds and a natural roll of 1 always fails, regardless of Modifiers (Part 3.6).
+
+A Modifier is distinct from a Fixed Addition (Part 3.5), which generates a value rather than adjusting a Target Number.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>A Modifier adjusts the Target Number of a roll.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="non-lethal damage non-lethal-damage non-lethal damage (x) the unit suffers x points of damage. add this amount effectively to the unit’s damage marker. unlike standard damage, non-lethal damage does not trigger the remove casualties step (part 8.7.4, step 5), even if total damage exceeds a model’s hp. if the unit subsequently suffers standard damage, the combined total damage triggers casualty removal normally. non-lethal damage (x) the unit suffers x points of damage."><div class="glossary-card-head"><div class="glossary-card-name">NON-LETHAL DAMAGE</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>NON-LETHAL DAMAGE (X) The Unit suffers X points of Damage. Add this amount effectively to the Unit’s Damage Marker. Unlike standard Damage, NON-LETHAL DAMAGE does not trigger the Remove Casualties step (Part 8.7.4, Step 5), even if Total Damage exceeds a model’s HP. If the Unit subsequently suffers standard Damage, the combined Total Damage triggers casualty removal normally.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>NON-LETHAL DAMAGE (X) The unit suffers X points of Damage.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="on creep on-creep a friendly or enemy ground zerg unit is considered to be on creep while it is within 6&quot; of any creep tumor token or any model designated as a source of creep. while satisfying this condition, the unit gains the on creep keyword. this allows the unit to trigger specific special abilities or upgrades that require this state. a friendly or enemy ground zerg unit is considered to be on creep while it is within 6&quot; of any creep tumor token or any model designated as a source of creep."><div class="glossary-card-head"><div class="glossary-card-name">ON CREEP</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A Friendly or Enemy Ground Zerg Unit is considered to be ON CREEP while it is Within 6&quot; of any Creep Tumor Token or any model designated as a Source of Creep. While satisfying this condition, the Unit gains the ON CREEP Keyword. This allows the Unit to trigger specific Special Abilities or Upgrades that require this state.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>A Friendly or Enemy Ground Zerg unit is considered to be ON CREEP while it is Within 6&quot; of any Creep Tumor Token or any model designated as a Source of Creep.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="pierce pierce pierce [tag] x when attacking a unit with the specified combat tag, treat this weapon’s damage characteristic as x. pierce [tag] x when attacking a unit with the specified combat tag, treat this weapon’s damage characteristic as x."><div class="glossary-card-head"><div class="glossary-card-name">PIERCE</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>PIERCE [TAG] X When attacking a Unit with the specified Combat Tag, treat this weapon’s Damage characteristic as X.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>PIERCE [TAG] X When attacking a unit with the specified Combat Tag, treat this weapon’s Damage characteristic as X.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="pinpoint pinpoint ranged attacks with this weapon may target engaged enemy units, ignoring the standard engagement status restriction (overrides part 8.7.3, step 1). ranged attacks with this weapon may target engaged enemy units, ignoring the standard engagement status restriction (overrides part 8.7.3, step 1)."><div class="glossary-card-head"><div class="glossary-card-name">PINPOINT</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>Ranged Attacks with this weapon may target Engaged Enemy Units, ignoring the standard Engagement Status restriction (overrides Part 8.7.3, Step 1).</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>Ranged Attacks with this weapon may target Engaged enemy units, ignoring the standard Engagement Status restriction (overrides Part 8.7.3, Step 1).</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="place place place (x) choose a leading model. remove it and set it wholly within x&quot; of its starting position. then remove and replace all other models in the unit, maintaining coherency (part 4.4). place ignores gap clearance, terrain restrictions, and elevation requirements. the leading model is removed and set directly, not moved along a path. however, they must end in a legal position. models may be set within the engagement range of enemy models (the unit becomes engaged) unless stated otherwise. place (x) choose a leading model."><div class="glossary-card-head"><div class="glossary-card-name">PLACE</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>PLACE (X) Choose a Leading Model. Remove it and set it Wholly Within X&quot; of its starting position. Then remove and replace all other models in the Unit, maintaining Coherency (Part 4.4). PLACE ignores Gap Clearance, terrain restrictions, and elevation requirements. The Leading Model is removed and set directly, not moved along a path. However, they must end in a legal position. Models may be set Within the Engagement Range of Enemy models (the Unit becomes Engaged) unless stated otherwise.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>PLACE (X) Choose a leading model.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="precision precision precision (x) after rolling to hit, move up to x failed attack dice directly into the armour pool. treat them as successful hits for all purposes, including surge. precision (x) after rolling to hit, move up to x failed attack dice directly into the armour pool."><div class="glossary-card-head"><div class="glossary-card-name">PRECISION</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>PRECISION (X) After rolling to Hit, move up to X failed Attack Dice directly into the Armour Pool. Treat them as successful Hits for all purposes, including Surge.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>PRECISION (X) After rolling to Hit, move up to X failed Attack Dice directly into the Armour Pool.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="ready ready the default state of a tactical card or faction card. a ready card is face-up, its abilities are available, and it may be exhausted to pay resource costs or activate its special abilities. all tactical cards and faction cards begin each round in the ready state. cards that have been exhausted are returned to ready during cleanup &amp; refresh (part 8.9.5). the default state of a tactical card or faction card."><div class="glossary-card-head"><div class="glossary-card-name">READY</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>The default state of a Tactical Card or Faction Card. A Ready card is face-up, its abilities are available, and it may be Exhausted to pay resource costs or activate its Special Abilities. All Tactical Cards and Faction Cards begin each Round in the Ready state. Cards that have been Exhausted are returned to Ready during Cleanup &amp; Refresh (Part 8.9.5).</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>The default state of a Tactical Card or Faction Card.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="repeatable repeatable this ability is exempt from the once per round limit (part 2.7.1). it may be used multiple times per round and per activation, provided all costs and trigger conditions are met each time. this ability is exempt from the once per round limit."><div class="glossary-card-head"><div class="glossary-card-name">REPEATABLE</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>This ability is exempt from the Once Per Round limit (Part 2.7.1). It may be used multiple times per Round and per Activation, provided all Costs and trigger conditions are met each time.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>This ability is exempt from the Once Per Round limit.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="reserves reserves a holding area off the battlefield where units remain until they are deployed. all units begin the game in reserves. a unit in reserves is part of the player’s army for all purposes - it counts towards army building limits and is tracked on the army roster - but it is not on the battlefield.
+
+while in reserves, a unit:
+
+• cannot be targeted by attacks or abilities unless an ability explicitly states it affects units in reserves.
+
+• cannot use active abilities, passive abilities, or reaction abilities unless the ability explicitly states otherwise.
+
+• cannot control or contest mission markers.
+
+• does not contribute its current supply to the player’s total current supply on the battlefield.
+
+• retains all equipment, upgrades, and weapon selections assigned during army building.
+
+a unit enters reserves at the start of the game and leaves reserves when it is deployed to the battlefield. some rules may return a unit to reserves during play - see part 8.5.5 (units returned to reserves) for how damage, effects, and supply are handled when this occurs.
+
+in the final round of the game, all units still in reserves that are not deployed are treated as destroyed for scoring purposes (part 8.10). a holding area off the battlefield where units remain until they are deployed."><div class="glossary-card-head"><div class="glossary-card-name">RESERVES</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A holding area off the battlefield where Units remain until they are deployed. All Units begin the game in Reserves. A Unit in Reserves is part of the player’s army for all purposes - it counts towards Army Building limits and is tracked on the Army Roster - but it is not on the battlefield.
+
+While in Reserves, a Unit:
+
+• Cannot be targeted by attacks or abilities unless an ability explicitly states it affects Units in Reserves.
+
+• Cannot use Active Abilities, Passive Abilities, or Reaction Abilities unless the ability explicitly states otherwise.
+
+• Cannot control or contest Mission Markers.
+
+• Does not contribute its Current Supply to the player’s Total Current Supply on the battlefield.
+
+• Retains all equipment, upgrades, and weapon selections assigned during Army Building.
+
+A Unit enters Reserves at the start of the game and leaves Reserves when it is deployed to the battlefield. Some rules may return a Unit to Reserves during play - see Part 8.5.5 (Units Returned to Reserves) for how Damage, effects, and Supply are handled when this occurs.
+
+In the final Round of the game, all Units still in Reserves that are not deployed are treated as Destroyed for scoring purposes (Part 8.10).</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>A holding area off the battlefield where units remain until they are deployed.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: even if it is standing next to an objective, that unit still does not count for controlling it.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="reserves reserves a holding area off the battlefield where units remain until they are deployed. all units begin the game in reserves.
+
+while in reserves, a unit:
+
+• cannot be targeted by attacks or abilities unless an ability explicitly states it affects units in reserves.
+
+• cannot use active abilities, passive abilities, or reaction abilities unless the ability explicitly states otherwise.
+
+• cannot control or contest mission markers.
+
+• does not contribute its current supply value to the player&#39;s total current supply on the battlefield.
+
+• retains all equipment, upgrades, and weapon selections assigned during army building.
+
+a unit leaves reserves when it is deployed to the battlefield via a deploy action (part 8.5.5). some rules may return a unit to reserves during play- see part 8.5.5 for how damage, effects, and supply are handled. in the final round of the game, all units still in reserves that are not deployed are treated as destroyed for scoring purposes (part 8.10). a holding area off the battlefield where units remain until they are deployed."><div class="glossary-card-head"><div class="glossary-card-name">RESERVES</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A holding area off the battlefield where Units remain until they are deployed. All Units begin the game in Reserves.
+
+While in Reserves, a Unit:
+
+• Cannot be targeted by attacks or abilities unless an ability explicitly states it affects Units in Reserves.
+
+• Cannot use Active Abilities, Passive Abilities, or Reaction Abilities unless the ability explicitly states otherwise.
+
+• Cannot Control or Contest Mission Markers.
+
+• Does not contribute its Current Supply Value to the player&#39;s Total Current Supply on the battlefield.
+
+• Retains all equipment, upgrades, and weapon selections assigned during Army Building.
+
+A Unit leaves Reserves when it is deployed to the battlefield via a Deploy action (Part 8.5.5). Some rules may return a Unit to Reserves during play- see Part 8.5.5 for how Damage, effects, and Supply are handled. In the final Round of the game, all Units still in Reserves that are not deployed are treated as Destroyed for scoring purposes (Part 8.10).</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>A holding area off the battlefield where units remain until they are deployed.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: even if it is standing next to an objective, that unit still does not count for controlling it.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="respawn respawn respawn (x) return up to x destroyed models to this unit.
+
+• the return cannot increase the unit’s current supply value. do not return a model if doing so would push the unit into a higher supply bracket.
+
+• set each returned model in base-to-base contact with an existing model in the unit. returned models cannot be set within the engagement range of any enemy unit.
+
+• if a model cannot be set legally, it cannot be returned. respawn (x) return up to x destroyed models to this unit."><div class="glossary-card-head"><div class="glossary-card-name">RESPAWN</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>RESPAWN (X) Return up to X Destroyed models to this Unit.
+
+• The return cannot increase the Unit’s Current Supply Value. Do not return a model if doing so would push the Unit into a higher Supply bracket.
+
+• Set each returned model in Base-to-Base contact with an existing model in the Unit. Returned models cannot be set Within the Engagement Range of any Enemy Unit.
+
+• If a model cannot be set legally, it cannot be returned.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>RESPAWN (X) Return up to X Destroyed models to this unit.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if a situation would break this restriction, the action is not allowed unless another rule overrides it.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="shielded shielded if a shield value is present on a unit card, add it to the h it points (hp) of the first model. the unit is shielded. the unit loses its shielded status when the total damage assigned to it exceeds its shield value or when the first model in the unit is removed.
+
+the shielded status is referenced by other abilities. losing shielded status does not remove any remaining hit points, it only ends effects that require the unit to be shielded. if a shield value is present on a unit card, add it to the h it points (hp) of the first model."><div class="glossary-card-head"><div class="glossary-card-name">SHIELDED</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>If a Shield value is present on a Unit Card, add it to the H it Points (HP) of the first model. The Unit is Shielded. The Unit loses its Shielded Status when the Total Damage assigned to it exceeds its Shield value or when the first model in the Unit is removed.
+
+The Shielded Status is referenced by other abilities. Losing Shielded Status does not remove any remaining Hit Points, it only ends effects that require the Unit to be Shielded.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>If a Shield value is present on a unit Card, add it to the H it Points (HP) of the first model.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="sidearm sidearm when this unit performs a ranged attack or close combat attack, models equipped with this weapon may use it, ignoring the normal restriction of one weapon per model (part 8.7.3). if a model is equipped with multiple sidearm weapons, it may use all of them in the same activation.
+
+attacks made with each sidearm must be resolved in separate batches. because they are separate batches, sidearm attacks may target a different enemy unit than the unit&#39;s other weapons, subject to all standard target eligibility requirements. when this unit performs a ranged attack or close combat attack, models equipped with this weapon may use it, ignoring the normal restriction of one weapon per model."><div class="glossary-card-head"><div class="glossary-card-name">SIDEARM</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>When this Unit performs a Ranged Attack or Close Combat Attack, models equipped with this weapon may use it, ignoring the normal restriction of one weapon per model (Part 8.7.3). If a model is equipped with multiple SIDEARM weapons, it may use all of them in the same activation.
+
+Attacks made with each SIDEARM must be resolved in separate Batches. Because they are separate Batches, SIDEARM attacks may target a different Enemy Unit than the Unit&#39;s other weapons, subject to all standard target eligibility requirements.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>When this unit performs a Ranged Attack or Close Combat Attack, models equipped with this weapon may use it, ignoring the normal restriction of one weapon per model.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="special ability special-ability a special ability is any named ability printed on a unit card, tactical card, or faction card. every special ability falls into one of three categories: active ability, passive ability, or reaction ability (part 2.7).
+
+• active abilities require the unit to be activated and are triggered immediately before or after an action. each named active ability may be used once per round per unit unless it has the repeatable keyword.
+
+• passive abilities are always in effect as long as the unit is on the battlefield.
+
+• reaction abilities fire in response to a specific trigger. each player may resolve only one reaction per activation, and each named reaction ability may be used only once per round per unit.
+
+all three types are inactive while the unit is in reserves unless the ability explicitly states otherwise. a special ability is any named ability printed on a unit card, tactical card, or faction card."><div class="glossary-card-head"><div class="glossary-card-name">SPECIAL ABILITY</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A Special Ability is any named ability printed on a Unit Card, Tactical Card, or Faction Card. Every Special Ability falls into one of three categories: Active Ability, Passive Ability, or Reaction Ability (Part 2.7).
+
+• Active Abilities require the Unit to be Activated and are triggered immediately before or after an action. Each named Active Ability may be used once per Round per Unit unless it has the REPEATABLE Keyword.
+
+• Passive Abilities are always in effect as long as the Unit is on the battlefield.
+
+• Reaction Abilities fire in response to a specific trigger. Each player may resolve only one Reaction per Activation, and each named Reaction Ability may be used only once per Round per Unit.
+
+All three types are inactive while the Unit is in Reserves unless the ability explicitly states otherwise.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>A Special Ability is any named ability printed on a unit Card, Tactical Card, or Faction Card.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="specialist specialist a unit may include only one model equipped with this weapon. multiple upgrades configuring more than one instance of this weapon are not permitted (part 9.1.7). a unit may include only one model equipped with this weapon."><div class="glossary-card-head"><div class="glossary-card-name">SPECIALIST</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A Unit may include only one model equipped with this weapon. Multiple upgrades configuring more than one instance of this weapon are not permitted (Part 9.1.7).</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>A unit may include only one model equipped with this weapon.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="spillover spillover additional hits generated by a template weapon that strike models outside the primary target unit. when a blast template (bt) or flamer template (ft) covers models belonging to units other than the primary target, those models are resolved as spillover. each affected unit is resolved as a separate batch. spillover batches do not apply rate of attack modifiers and do not generate surge. spillover may affect both friendly and enemy units. see part 8.7.6 for the full template weapon procedure. additional hits generated by a template weapon that strike models outside the primary target unit."><div class="glossary-card-head"><div class="glossary-card-name">SPILLOVER</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>Additional hits generated by a Template Weapon that strike models outside the Primary target Unit. When a Blast Template (BT) or Flamer Template (FT) covers models belonging to Units other than the Primary target, those models are resolved as Spillover. Each affected Unit is resolved as a separate Batch. Spillover Batches do not apply Rate of Attack modifiers and do not generate Surge. Spillover may affect both Friendly and Enemy Units. See Part 8.7.6 for the full Template Weapon procedure.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>Additional hits generated by a Template Weapon that strike models outside the Primary target unit.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="stationary stationary at the start of the round, all units gain this status. a unit immediately loses this status if any model in this unit moves, is moved, or is placed for any reason. at the start of the round, all units gain this status."><div class="glossary-card-head"><div class="glossary-card-name">STATIONARY</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>At the Start of the Round, all Units gain this Status. A Unit immediately loses this Status if any model in this Unit moves, is moved, or is PLACED for any reason.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>At the Start of the Round, all units gain this Status.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="status status a category of keyword representing a temporary or persistent operational mode, condition, or statistic modifier affecting a unit (e.g. burrowed, siege mode).
+
+a unit’s active status is visually tracked using status markers set next to the unit:
+
+• modes: use plastic markers to track operational shifts (e.g. siege mode, burrowed). those status markers have stay in play.
+
+• buffs/debuffs: use markers to track temporary changes to characteristics (blue = buff, red = debuff). a category of keyword representing a temporary or persistent operational mode, condition, or statistic modifier affecting a unit (e.g."><div class="glossary-card-head"><div class="glossary-card-name">STATUS</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A category of Keyword representing a temporary or persistent operational mode, condition, or statistic modifier affecting a Unit (e.g. BURROWED, SIEGE MODE).
+
+A Unit’s active Status is visually tracked using Status Markers set next to the Unit:
+
+• Modes: Use Plastic Markers to track operational shifts (e.g. SIEGE MODE, BURROWED). Those Status Markers have STAY IN PLAY.
+
+• Buffs/Debuffs: Use Markers to track temporary changes to characteristics (Blue = Buff, Red = Debuff).</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>A category of Keyword representing a temporary or persistent operational mode, condition, or statistic modifier affecting a unit (e.g.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="stay in play stay-in-play this token, marker or ability effect persists through cleanup &amp; refresh (overrides part 8.9.5). it remains until a specific condition removes it (e.g. destroyed or duration expires). this token, marker or ability effect persists through cleanup &amp; refresh (overrides part 8.9.5)."><div class="glossary-card-head"><div class="glossary-card-name">STAY IN PLAY</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>This Token, Marker or Ability Effect persists through Cleanup &amp; Refresh (overrides Part 8.9.5). It remains until a specific condition removes it (e.g. destroyed or duration expires).</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>This Token, Marker or Ability Effect persists through Cleanup &amp; Refresh (overrides Part 8.9.5).</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="summon summon summon (unit name) set the leading model of the named unit in base-to-base contact with the parent unit. set remaining models in coherency. models cannot be set within the engagement range of any enemy unit.
+
+set an activation marker next to the summoned unit - it cannot be activated during the phase in which it was summoned. in subsequent phases, this unit must be activated immediately after its parent unit’s activation ends, before the opponent’s next activation.
+
+the summoned unit cannot be set within the opponent’s zone of influence.
+
+the player must have sufficient available supply. if the unit’s current supply value would cause total current supply to exceed the supply pool, it cannot be summoned.
+
+if the parent is not present on the battlefield, this unit can be activated normally. summon (unit name) set the leading model of the named unit in base-to-base contact with the parent unit."><div class="glossary-card-head"><div class="glossary-card-name">SUMMON</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>SUMMON (Unit Name) Set the Leading Model of the named Unit in Base-to-Base contact with the Parent Unit. Set remaining models In Coherency. Models cannot be set Within the Engagement Range of any Enemy Unit.
+
+Set an Activation Marker next to the summoned Unit - it cannot be Activated during the Phase in which it was summoned. In subsequent Phases, this Unit must be Activated immediately after its Parent Unit’s activation ends, before the opponent’s next activation.
+
+The Summoned Unit cannot be set Within the opponent’s Zone of Influence.
+
+The player must have sufficient Available Supply. If the Unit’s Current Supply Value would cause Total Current Supply to exceed the Supply Pool, it cannot be Summoned.
+
+If the Parent is not present on the battlefield, this Unit can be Activated normally.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>SUMMON (unit Name) Set the leading model of the named unit in Base-to-Base contact with the Parent unit.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if a situation would break this restriction, the action is not allowed unless another rule overrides it.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="supply value supply-value the supply value of a unit is the value shown on the unit card&#39;s supply profile corresponding to the unit&#39;s current model count. a unit&#39;s starting supply value is determined during army building by the composition option selected (part 9.1.6) and defines how many army slots the unit occupies.
+
+ supply value is a dynamic characteristic- as casualties reduce the model count into a lower bracket on the supply profile, the supply value decreases. update immediately when a casualty moves the unit into a lower bracket. supply is used for deployment, mission marker control, tactical mass, and scoring. the supply value of a unit is the value shown on the unit card&#39;s supply profile corresponding to the unit&#39;s current model count."><div class="glossary-card-head"><div class="glossary-card-name">SUPPLY VALUE</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>The Supply Value of a Unit is the value shown on the Unit Card&#39;s Supply Profile corresponding to the Unit&#39;s current model count. A Unit&#39;s starting Supply Value is determined during Army Building by the Composition Option selected (Part 9.1.6) and defines how many Army Slots the Unit occupies.
+
+ Supply Value is a dynamic characteristic- as casualties reduce the model count into a lower bracket on the Supply Profile, the Supply Value decreases. Update immediately when a casualty moves the Unit into a lower bracket. Supply is used for Deployment, Mission Marker Control, Tactical Mass, and scoring.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>The Supply Value of a unit is the value shown on the unit Card&#39;s Supply Profile corresponding to the unit&#39;s current model count.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="supporting rank supporting-rank a model is in the supporting rank if it is in base-to-base contact with a friendly model from the same unit that is in the fighting rank, but is not itself within the engagement range of an enemy model. models in the supporting rank may strike with their combat phase weapons as though they were in the fight. see part 8.8.1, step 2. a model is in the supporting rank if it is in base-to-base contact with a friendly model from the same unit that is in the fighting rank, but is not itself within the engagement range of an enemy model."><div class="glossary-card-head"><div class="glossary-card-name">SUPPORTING RANK</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A model is in the Supporting Rank if it is in Base-to-Base contact with a Friendly model from the same Unit that is in the Fighting Rank, but is not itself Within the Engagement Range of an Enemy model. Models in the Supporting Rank may strike with their Combat Phase weapons as though they were in the fight. See Part 8.8.1, Step 2.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>A model is in the Supporting Rank if it is in Base-to-Base contact with a Friendly model from the same unit that is in the Fighting Rank, but is not itself Within the Engagement Range of an Enemy model.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="tactical mass tactical-mass a unit has tactical mass when its current supply value exceeds the combined current supply value of all enemy units it is engaged with. a unit with tactical mass ignores the disengage penalty (part 8.5.4): it may ranged attack and charge normally in the following assault phase after disengaging. a unit has tactical mass when its current supply value exceeds the combined current supply value of all enemy units it is engaged with."><div class="glossary-card-head"><div class="glossary-card-name">TACTICAL MASS</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A Unit has Tactical Mass when its Current Supply Value exceeds the Combined Current Supply Value of all Enemy Units it is Engaged with. A Unit with Tactical Mass ignores the Disengage penalty (Part 8.5.4): it may Ranged Attack and Charge normally in the following Assault Phase after Disengaging.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>A unit has Tactical Mass when its Current Supply Value exceeds the Combined Current Supply Value of all enemy units it is Engaged with.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="tough tough tough (x) when this unit resolves an armour roll, change up to x failed results into successes. treat them as meeting or exceeding the armour characteristic - discard them without moving to the damage pool. tough (x) when this unit resolves an armour roll, change up to x failed results into successes."><div class="glossary-card-head"><div class="glossary-card-name">TOUGH</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>TOUGH (X) When this Unit resolves an Armour Roll, change up to X failed results into successes. Treat them as meeting or exceeding the Armour characteristic - discard them without moving to the Damage Pool.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>TOUGH (X) When this unit resolves an Armour Roll, change up to X failed results into successes.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="unengaged unengaged a ground unit is unengaged when none of its models is within 1&quot; of any enemy ground model, or when terrain restrictions (part 7.2.1) prevent valid engagement despite proximity. flying units are always unengaged.
+
+an unengaged unit may perform a standard move, run, ranged attack, or charge without restriction. only unengaged units may be selected to perform a move action (part 8.5.2). a ground unit is unengaged when none of its models is within 1&quot; of any enemy ground model, or when terrain restrictions prevent valid engagement despite proximity."><div class="glossary-card-head"><div class="glossary-card-name">UNENGAGED</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A Ground Unit is Unengaged when none of its models is Within 1&quot; of any Enemy Ground model, or when terrain restrictions (Part 7.2.1) prevent valid Engagement despite proximity. Flying Units are always Unengaged.
+
+An Unengaged Unit may perform a standard Move, Run, Ranged Attack, or Charge without restriction. Only Unengaged Units may be selected to perform a Move action (Part 8.5.2).</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>A Ground unit is Unengaged when none of its models is Within 1&quot; of any Enemy Ground model, or when terrain restrictions prevent valid Engagement despite proximity.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="visible visible a model is visible to another model if a valid line of sight trace can be drawn between them (part 7.1). if the trace does not pass through any blocking terrain, the target is visible without further checks. if the trace passes through blocking terrain, apply the cover rules (part 7.1.1)- the target remains visible unless full cover or direct cover blocks the line of sight.
+
+a model with the hidden keyword is not visible to any model more than 4&quot; away, regardless of line of sight.
+
+ visible is a reciprocal state: if model a is visible to model b, then model b is visible to model a. a model is visible to another model if a valid line of sight trace can be drawn between them."><div class="glossary-card-head"><div class="glossary-card-name">VISIBLE</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A model is Visible to another model if a valid Line of Sight trace can be drawn between them (Part 7.1). If the trace does not pass through any Blocking Terrain, the target is Visible without further checks. If the trace passes through Blocking Terrain, apply the Cover rules (Part 7.1.1)- the target remains Visible unless Full Cover or Direct Cover blocks the Line of Sight.
+
+A model with the HIDDEN Keyword is not Visible to any model more than 4&quot; away, regardless of Line of Sight.
+
+ Visible is a reciprocal state: if Model A is Visible to Model B, then Model B is Visible to Model A.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>A model is Visible to another model if a valid Line of Sight trace can be drawn between them.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="wholly within wholly-within a model is wholly within a distance only if its entire base sits inside that range- no part of the base may extend beyond the edge. a unit is wholly within a distance only if every model in the unit satisfies this condition.
+
+ wholly within is a stricter requirement than within and is used for coherency checks (part 4.4), certain ability areas of effect, and mission marker eligibility. when a rule specifies wholly within, partial overlap is not sufficient. a model is wholly within a distance only if its entire base sits inside that range- no part of the base may extend beyond the edge."><div class="glossary-card-head"><div class="glossary-card-name">WHOLLY WITHIN</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A model is Wholly Within a distance only if its entire base sits inside that range- no part of the base may extend beyond the edge. A Unit is Wholly Within a distance only if every model in the Unit satisfies this condition.
+
+ Wholly Within is a stricter requirement than Within and is used for Coherency checks (Part 4.4), certain ability areas of effect, and Mission Marker eligibility. When a rule specifies Wholly Within, partial overlap is not sufficient.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>A model is Wholly Within a distance only if its entire base sits inside that range- no part of the base may extend beyond the edge.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="within within a model is within a distance if any part of its base touches or crosses into that range. a unit is within a distance if at least one model in the unit meets this condition.
+
+ within is a less restrictive requirement than wholly within. when a rule specifies within without the word &quot;wholly,&quot; partial overlap is sufficient. a model is within a distance if any part of its base touches or crosses into that range."><div class="glossary-card-head"><div class="glossary-card-name">WITHIN</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A model is Within a distance if any part of its base touches or crosses into that range. A Unit is Within a distance if at least one model in the Unit meets this condition.
+
+ Within is a less restrictive requirement than Wholly Within. When a rule specifies Within without the word &quot;Wholly,&quot; partial overlap is sufficient.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>A model is Within a distance if any part of its base touches or crosses into that range.</p></div></div></div></div>
+        <div class="glossary-card" data-keywords="zone of influence zone-of-influence a restricted area of the battlefield extending 6&quot; inward from a player’s entry edge, as defined by the deployment card. where the entry edg e does not run the full length of a table edge, the zone of influence is marked using zone of influence markers set at the corners of the entry edge.
+
+ units arriving from reserves cannot end their deployment within the opponent’s zone of influence. this restriction applies to all forms of arrival - whether by standard deployment, transport, or summon (part 8.3.3).
+
+the z one of influence does not affect units already on the battlefield. it does not restrict movement, block line of sight, or interact with any other rule once a unit has completed its arrival. a restricted area of the battlefield extending 6&quot; inward from a player’s entry edge, as defined by the deployment card."><div class="glossary-card-head"><div class="glossary-card-name">ZONE OF INFLUENCE</div><div class="glossary-card-type">Keyword</div></div><div class="glossary-card-body"><div class="glossary-block raw"><span class="glossary-block-label">RAW Definition</span><div class="glossary-block-text"><p>A restricted area of the battlefield extending 6&quot; inward from a player’s Entry Edge, as defined by the Deployment Card. Where the Entry Edg e does not run the full length of a table edge, the Zone of Influence is marked using Zone of Influence Markers set at the corners of the Entry Edge.
+
+ Units arriving from Reserves cannot end their deployment Within the opponent’s Zone of Influence. This restriction applies to all forms of arrival - whether by standard deployment, transport, or SUMMON (Part 8.3.3).
+
+The Z one of Influence does not affect Units already on the battlefield. It does not restrict movement, block Line of Sight, or interact with any other rule once a Unit has completed its arrival.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Common English</span><div class="glossary-block-text"><p>A restricted area of the battlefield extending 6&quot; inward from a player’s Entry Edge, as defined by the Deployment Card.</p></div></div><div class="glossary-block"><span class="glossary-block-label">Example</span><div class="glossary-block-text glossary-example"><p>Example: if a situation would break this restriction, the action is not allowed unless another rule overrides it.</p></div></div></div></div>
+      </div>
+
+      <div class="no-results" id="glossaryNoResults" style="display: none;">
+        <div class="no-results-icon">🔍</div>
+        <div class="no-results-text">No glossary terms found matching your search</div>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <div class="footer-text">StarCraft: The Miniatures Game<br>Reorganized Master Rules Reference</div>
+    </div>
+  </div>
+
+  <div class="content-tabs" id="referenceBottomTabs"></div>
+  
+  <script src="./runtime/payloads/reference-page-shell.js"></script>
+  <script src="./runtime/payloads/rules-reference.js"></script>
+  <script src="./runtime/payloads/glossary-reference.js"></script>
+  <script src="./runtime/payloads/glossary-renderer.js"></script>
+  <script>
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function normalizeGlossaryText(text) {
+      return String(text || '')
+        .replace(/\s+\./g, '.')
+        .replace(/\s+,/g, ',')
+        .replace(/\s+:/g, ':')
+        .replace(/\(\s+/g, '(')
+        .replace(/\s+\)/g, ')')
+        .replace(/\r\n/g, '\n')
+        .replace(/[ \t]{2,}/g, ' ')
+        .trim();
+    }
+
+    function formatGlossaryText(text) {
+      const normalized = normalizeGlossaryText(text);
+      if (!normalized) return '';
+      const parts = normalized.split(/\n\s*\n/).map(part => part.trim()).filter(Boolean);
+      return parts.map((part) => {
+        if (part.includes('•')) {
+          const bullets = part.split('•').map(bit => bit.trim()).filter(Boolean);
+          if (bullets.length > 1) {
+            return '<ul>' + bullets.map(bit => '<li>' + escapeHtml(bit) + '</li>').join('') + '</ul>';
+          }
+        }
+        return '<p>' + escapeHtml(part) + '</p>';
+      }).join('');
+    }
+
+    function buildQuickRead(rawText) {
+      const cleaned = normalizeGlossaryText(rawText)
+        .replace(/\(Part[^)]*\)/gi, '')
+        .replace(/\bEnemy Units\b/g, 'enemy units')
+        .replace(/\bEnemy Unit\b/g, 'enemy unit')
+        .replace(/\bLeading Model\b/g, 'leading model')
+        .replace(/\bMission Markers\b/g, 'mission markers')
+        .replace(/\bMission Marker\b/g, 'mission marker')
+        .replace(/\bUnits\b/g, 'units')
+        .replace(/\bUnit\b/g, 'unit')
+        .replace(/\bTerrain\b/g, 'terrain')
+        .replace(/\bModels\b/g, 'models')
+        .replace(/\bModel\b/g, 'model');
+      const firstSentence = cleaned.split(/(?<=[.!?])\s+/)[0] || cleaned;
+      if (!firstSentence) return '';
+      const simplified = firstSentence.replace(/\s{2,}/g, ' ').replace(/\s+\./g, '.').trim();
+      if (/^The player whose turn it is/i.test(simplified)) return 'This means the player currently taking actions.';
+      if (/^A physical Token used to track/i.test(simplified)) return 'This is the token that shows who currently has initiative.';
+      if (/^A terrain piece/i.test(simplified)) return 'This term explains a terrain rule that affects movement, line of sight, or both.';
+      if (/^This Unit cannot/i.test(simplified)) return 'In simple terms: this places a hard restriction on what the unit can do.';
+      if (/^This weapon cannot/i.test(simplified)) return 'In simple terms: this weapon is restricted in when it can be used.';
+      return simplified;
+    }
+
+    function buildExample(name, rawText) {
+      const upperName = String(name || '').toUpperCase();
+      const examples = {
+        'ACCESS POINT': 'Example: if a model climbs through a doorway or ramp between levels, it is using an access point.',
+        'ACTIVE PLAYER': 'Example: if it is your activation and you are choosing actions, you are the active player.',
+        'ANTI-EVADE': 'Example: if a weapon has ANTI-EVADE (1), the target makes its Evade roll one step worse for that attack.',
+        'BUFF': 'Example: if a unit gains BUFF Speed (2), it moves farther until the round ends.',
+        'BULKY': 'Example: if the unit is already engaged, it cannot fire a Bulky ranged weapon.',
+        'BURROWED': 'Example: if a Zerg unit gains Burrowed, it is now treated as having that status until something removes it.',
+        'BURST FIRE': 'Example: if the target is inside the listed short range, the weapon gains extra rate of attack dice.',
+        'CONCENTRATED FIRE': 'Example: even if the attack rolls huge damage, it can only remove up to the listed number of models.',
+        'CRITICAL HIT': 'Example: if CRITICAL HIT (1) triggers, one die skips Armour and goes straight into Damage.',
+        'DEBUFF': 'Example: if a unit suffers DEBUFF Hit (1), its attack rolls become one step worse until the round ends.',
+        'DODGE': 'Example: if Surge would push 2 dice into Damage and the unit has DODGE (1), only 1 die gets through from that effect.',
+        'ENTRY EDGE': 'Example: when a reserve unit deploys, it comes in from its assigned entry edge.',
+        'FIGHTING RANK': 'Example: a model within 1 inch of an enemy is in the fighting rank and can strike in Combat.',
+        'FIRST PLAYER MARKER': 'Example: when someone passes first in Movement or Assault, the marker can change hands for the next phase.',
+        'FLYING': 'Example: a Flying unit can move over terrain, but it cannot control mission markers or fight in Combat.',
+        'HEAL': 'Example: if a unit has 2 damage marked and resolves HEAL (1), it drops to 1 damage marked.',
+        'HIDDEN': 'Example: if the attacker is farther than 4 inches away, it usually cannot target a Hidden unit.',
+        'HITS': 'Example: HITS 2 means 2 dice go straight into the Armour Pool before armour rolls are made.',
+        'IMPACT': 'Example: after a successful charge, each eligible model rolls its Impact dice before normal Combat attacks.'
+      };
+      if (examples[upperName]) return examples[upperName];
+      if (/cannot Control or Contest Mission Markers/i.test(rawText)) {
+        return 'Example: even if it is standing next to an objective, that unit still does not count for controlling it.';
+      }
+      if (/When this Unit is targeted by an attack/i.test(rawText)) {
+        return 'Example: this takes effect right when the unit becomes the target of an attack.';
+      }
+      if (/When making a Ranged Attack/i.test(rawText)) {
+        return 'Example: check this keyword at the moment the ranged attack is declared and resolved.';
+      }
+      if (/When this Unit completes a successful Charge/i.test(rawText)) {
+        return 'Example: this only happens after the charge succeeds, not on a failed charge.';
+      }
+      if (/cannot/i.test(rawText)) {
+        return 'Example: if a situation would break this restriction, the action is not allowed unless another rule overrides it.';
+      }
+      return '';
+    }
+
+    function buildGlossaryEntry(keyword) {
+      const raw = normalizeGlossaryText(keyword.description || keyword.text || '');
+      return {
+        id: keyword.id || keyword.slug || '',
+        name: keyword.name || '',
+        type: keyword.type || 'Keyword',
+        raw,
+        quickRead: buildQuickRead(raw),
+        example: buildExample(keyword.name || '', raw),
+        keywords: [keyword.name || '', keyword.id || '', keyword.slug || ''].join(' ').toLowerCase()
+      };
+    }
+
+    function renderGlossarySection(entries) {
+      const grid = document.getElementById('glossaryGrid');
+      const badge = document.getElementById('glossaryCountBadge');
+      if (!grid || !badge) return;
+
+      const list = Array.isArray(entries) ? entries.slice().sort((a, b) => a.name.localeCompare(b.name)) : [];
+      badge.textContent = list.length + ' Terms';
+
+      if (!list.length) {
+        grid.innerHTML = '<div class="glossary-empty">No glossary terms are available yet.</div>';
+        return;
+      }
+
+      grid.innerHTML = list.map((entry) => {
+        const quickRead = entry.quickRead ? (
+          '<div class="glossary-block">' +
+            '<span class="glossary-block-label">Common English</span>' +
+            '<div class="glossary-block-text"><p>' + escapeHtml(entry.quickRead) + '</p></div>' +
+          '</div>'
+        ) : '';
+        const example = entry.example ? (
+          '<div class="glossary-block">' +
+            '<span class="glossary-block-label">Example</span>' +
+            '<div class="glossary-block-text glossary-example"><p>' + escapeHtml(entry.example) + '</p></div>' +
+          '</div>'
+        ) : '';
+
+        return (
+          '<div class="glossary-card" data-keywords="' + escapeHtml((entry.keywords + ' ' + entry.raw).toLowerCase()) + '">' +
+            '<div class="glossary-card-head">' +
+              '<div class="glossary-card-name">' + escapeHtml(entry.name) + '</div>' +
+              '<div class="glossary-card-type">' + escapeHtml(entry.type) + '</div>' +
+            '</div>' +
+            '<div class="glossary-card-body">' +
+              '<div class="glossary-block raw">' +
+                '<span class="glossary-block-label">RAW Definition</span>' +
+                '<div class="glossary-block-text">' + formatGlossaryText(entry.raw) + '</div>' +
+              '</div>' +
+              quickRead +
+              example +
+            '</div>' +
+          '</div>'
+        );
+      }).join('');
+    }
+
+    window.buildGlossaryEntry = buildGlossaryEntry;
+    window.renderGlossarySection = renderGlossarySection;
+
+    function toggleSection(section) {
+      section.classList.toggle('expanded');
+    }
+    
+    function toggleSubsection(subsection) {
+      subsection.classList.toggle('expanded');
+    }
+    
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetId = btn.getAttribute('href').substring(1);
+        const target = document.getElementById(targetId);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          if (!target.classList.contains('expanded')) {
+            target.classList.add('expanded');
+          }
+        }
+      });
+    });
+    
+    const rulesReference = window.__rulesReference;
+    if (rulesReference) {
+      rulesReference.mount(document.getElementById('rulesContainer'));
+    }
+
+    const referencePageShell = window.__referencePageShell;
+    if (referencePageShell) {
+      const menuHost = document.getElementById('referenceAppMenuShell');
+      const tabsHost = document.getElementById('referenceBottomTabs');
+      if (menuHost) menuHost.innerHTML = referencePageShell.renderMenu({ activePage: 'rules' });
+      if (tabsHost) tabsHost.innerHTML = referencePageShell.renderTabs({ activePage: 'rules' });
+    }
+
+    const rulesSearchInput = document.getElementById('rulesSearchInput');
+    const rulesClearBtn = document.getElementById('rulesClearBtn');
+    const rulesNoResults = document.getElementById('rulesNoResults');
+    const glossarySearchInput = document.getElementById('glossarySearchInput');
+    const glossaryClearBtn = document.getElementById('glossaryClearBtn');
+    const glossaryNoResults = document.getElementById('glossaryNoResults');
+    const contentTabs = Array.from(document.querySelectorAll('.content-tab'));
+    const contentViews = {
+      rules: document.getElementById('rulesView'),
+      glossary: document.getElementById('glossaryView')
+    };
+
+    function setContentView(view) {
+      contentTabs.forEach((tab) => tab.classList.toggle('active', tab.dataset.view === view));
+      Object.entries(contentViews).forEach(([key, node]) => {
+        const isActive = key === view;
+        node.classList.toggle('active', isActive);
+        node.style.display = isActive ? 'block' : 'none';
+      });
+      if (window.history && typeof window.history.replaceState === 'function') {
+        window.history.replaceState(null, '', view === 'glossary' ? '#glossary' : '#rules');
+      }
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      if (view === 'glossary' && typeof window.runGlossarySearch === 'function') {
+        window.runGlossarySearch(glossarySearchInput.value || '');
+      }
+    }
+
+    function runRulesSearch(query) {
+      const trimmed = query.toLowerCase().trim();
+      rulesClearBtn.classList.toggle('visible', trimmed.length > 0);
+
+      if (trimmed.length === 0) {
+        document.querySelectorAll('#rulesContainer .section').forEach((section) => {
+          section.classList.remove('hidden');
+          section.classList.remove('expanded');
+        });
+        document.querySelectorAll('#rulesContainer .subsection').forEach((subsection) => {
+          subsection.classList.remove('hidden');
+          subsection.classList.remove('expanded');
+        });
+        rulesNoResults.style.display = 'none';
+        return;
+      }
+
+      let hasResults = false;
+
+      document.querySelectorAll('#rulesContainer .section').forEach((section) => {
+        const sectionKeywords = section.dataset.keywords || '';
+        const sectionText = section.textContent.toLowerCase();
+        const sectionMatches = sectionText.includes(trimmed) || sectionKeywords.includes(trimmed);
+
+        if (sectionMatches) {
+          section.classList.remove('hidden');
+          section.classList.add('expanded');
+          hasResults = true;
+
+          section.querySelectorAll('.subsection').forEach((sub) => {
+            const subKeywords = sub.dataset.keywords || '';
+            const subText = sub.textContent.toLowerCase();
+            const subMatches = subText.includes(trimmed) || subKeywords.includes(trimmed);
+
+            if (subMatches) {
+              sub.classList.remove('hidden');
+              sub.classList.add('expanded');
+            } else {
+              sub.classList.add('hidden');
+            }
+          });
+        } else {
+          section.classList.add('hidden');
+        }
+      });
+
+      rulesNoResults.style.display = hasResults ? 'none' : 'block';
+    }
+
+    function runGlossarySearch(query) {
+      const trimmed = query.toLowerCase().trim();
+      glossaryClearBtn.classList.toggle('visible', trimmed.length > 0);
+
+      let hasResults = false;
+      document.querySelectorAll('#glossaryGrid .glossary-card').forEach((card) => {
+        const cardKeywords = card.dataset.keywords || '';
+        const cardText = card.textContent.toLowerCase();
+        const matches = trimmed.length === 0 || cardText.includes(trimmed) || cardKeywords.includes(trimmed);
+        card.style.display = matches ? '' : 'none';
+        if (matches) hasResults = true;
+      });
+
+      glossaryNoResults.style.display = hasResults ? 'none' : 'block';
+    }
+
+    rulesSearchInput.addEventListener('input', (e) => runRulesSearch(e.target.value));
+    rulesClearBtn.addEventListener('click', () => {
+      rulesSearchInput.value = '';
+      runRulesSearch('');
+      rulesSearchInput.focus();
+    });
+
+    contentTabs.forEach((tab) => {
+      if (!tab.dataset.view) return;
+      tab.addEventListener('click', () => setContentView(tab.dataset.view));
+    });
+
+    window.setContentView = setContentView;
+
+    const sharedGlossaryRenderer = window.__glossaryRenderer;
+    const sharedGlossaryEntries = Array.isArray(window.__glossaryReference) ? window.__glossaryReference : [];
+    if (sharedGlossaryRenderer && glossarySearchInput) {
+      sharedGlossaryRenderer.renderGlossarySection({
+        grid: document.getElementById('glossaryGrid'),
+        badge: document.getElementById('glossaryCountBadge'),
+        entries: sharedGlossaryEntries,
+        emptyText: 'No glossary terms are available yet.'
+      });
+      window.runGlossarySearch = sharedGlossaryRenderer.attachGlossarySearch({
+        input: glossarySearchInput,
+        clearBtn: glossaryClearBtn,
+        noResults: glossaryNoResults,
+        grid: document.getElementById('glossaryGrid')
+      });
+    } else {
+      window.runGlossarySearch = runGlossarySearch;
+      glossarySearchInput.addEventListener('input', (e) => runGlossarySearch(e.target.value));
+      glossaryClearBtn.addEventListener('click', () => {
+        glossarySearchInput.value = '';
+        runGlossarySearch('');
+        glossarySearchInput.focus();
+      });
+    }
+
+    contentViews.rules.style.display = 'block';
+    contentViews.glossary.style.display = 'none';
+    if (window.location.hash === '#glossary') {
+      setContentView('glossary');
+    } else {
+      setContentView('rules');
+    }
+  </script>
+</body>
+</html>
+
+
+

@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0d1118">
+  <title>StarCraft: TMG</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Sans+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d1118;
+      --panel: #171d28;
+      --panel-2: #1d2531;
+      --panel-3: #263140;
+      --text: #f2efe8;
+      --muted: #a9b0bb;
+      --border: #344256;
+      --accent: #d6a33a;
+      --accent-rgb: 214,163,58;
+      --menu-rgb: 214,163,58;
+      --zerg: #9333ea;
+      --terran: #3b82f6;
+      --protoss: #f0b94b;
+      --setup: #d97706;
+      --rules: #38bdf8;
+      --success: #22c55e;
+      --warning: #fbbf24;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --shadow: 0 14px 28px rgba(0,0,0,0.34);
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+      --condensed: 'IBM Plex Sans Condensed', var(--sans);
+    }
+    html, body {
+      background:
+        radial-gradient(circle at top center, rgba(59,130,246,0.08), transparent 28%),
+        radial-gradient(circle at 85% 12%, rgba(214,163,58,0.08), transparent 20%),
+        linear-gradient(180deg, #111722 0%, var(--bg) 22%, #0a0e15 100%);
+      color: var(--text);
+      overflow-x: hidden;
+      scrollbar-width: none;
+    }
+    body {
+      font-family: var(--sans);
+      min-height: 100vh;
+      min-height: 100dvh;
+      line-height: 1.45;
+      -webkit-tap-highlight-color: transparent;
+      padding-bottom: calc(72px + env(safe-area-inset-bottom));
+    }
+    body::-webkit-scrollbar { width: 0; height: 0; display: none; }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; }
+
+    /* ── BOOT SEQUENCE ── */
+    .boot-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: #0a0d12;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 32px 28px;
+      transition: opacity 0.9s ease;
+    }
+    .boot-overlay.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .boot-overlay.hidden { display: none; }
+    .boot-line {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      line-height: 1.8;
+      color: #8a9bb0;
+      opacity: 0;
+      transform: translateY(4px);
+      white-space: nowrap;
+      overflow: hidden;
+      max-width: 100%;
+    }
+    .boot-line.visible {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .boot-line.highlight {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .boot-line.ready {
+      color: var(--success);
+      font-weight: 700;
+      margin-top: 8px;
+    }
+    .boot-line.ready.visible {
+      animation: ready-flash 0.12s ease 3 alternate;
+    }
+    @keyframes ready-flash {
+      0% { opacity: 1; }
+      100% { opacity: 0.2; }
+    }
+    .boot-suffix {
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+    .boot-suffix.visible {
+      opacity: 1;
+    }
+    .boot-caution {
+      color: var(--zerg);
+      font-weight: 700;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+    .boot-caution.visible {
+      opacity: 1;
+      animation: caution-blink 0.5s ease 4;
+    }
+    @keyframes caution-blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.15; }
+    }
+    .boot-typing-cursor {
+      display: inline-block;
+      width: 0.55em;
+      height: 1.1em;
+      background: #8a9bb0;
+      margin-left: 1px;
+      vertical-align: text-bottom;
+      animation: cursor-blink 0.6s step-end infinite;
+    }
+    .boot-line.highlight .boot-typing-cursor {
+      background: var(--accent);
+    }
+    .boot-cursor {
+      display: inline-block;
+      width: 0.55em;
+      height: 1.1em;
+      background: var(--success);
+      margin-left: 3px;
+      vertical-align: text-bottom;
+      opacity: 0;
+    }
+    .boot-cursor.active {
+      opacity: 1;
+      animation: cursor-blink 1s step-end infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+    @keyframes cursor-blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* ── SPLASH SCREEN ── */
+    .splash-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      background: #080b10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.6s ease;
+      overflow: hidden;
+    }
+    .splash-overlay.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .splash-overlay.hidden { display: none; }
+
+    .splash-bg {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .splash-bg svg {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -54%);
+      width: min(78vw, 340px);
+      height: auto;
+      aspect-ratio: 1;
+      opacity: 0;
+      transition: opacity 1.2s ease 0.2s;
+    }
+    .splash-overlay.active .splash-bg svg { opacity: 0.14; }
+
+    .splash-glow-top {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 140px;
+      background: linear-gradient(180deg, rgba(59,130,246,0.07) 0%, transparent 100%);
+    }
+    .splash-glow-bottom {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 100px;
+      background: linear-gradient(0deg, rgba(147,51,234,0.05) 0%, transparent 100%);
+    }
+
+    .splash-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      width: min(100%, 420px);
+      padding-inline: 16px;
+    }
+    .splash-eyebrow {
+      font-family: var(--mono);
+      font-size: 0.58rem;
+      letter-spacing: 0.2em;
+      color: #4a5a6e;
+      text-transform: uppercase;
+      font-weight: 500;
+      margin-bottom: 18px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.5s ease 0.3s, transform 0.5s ease 0.3s;
+    }
+    .splash-overlay.active .splash-eyebrow {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .splash-logo {
+      display: block;
+      width: min(85vw, 380px);
+      height: auto;
+      margin: 0 auto 4px;
+      opacity: 0;
+      transform: scale(0.92);
+      transition: opacity 0.7s ease 0.35s, transform 0.7s ease 0.35s;
+      filter: drop-shadow(0 0 20px rgba(59,130,246,0.15)) drop-shadow(0 4px 30px rgba(0,0,0,0.5));
+    }
+    .splash-overlay.active .splash-logo {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .splash-divider {
+      width: 40px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      margin: 18px auto;
+      opacity: 0;
+      transition: opacity 0.5s ease 0.85s;
+    }
+    .splash-overlay.active .splash-divider { opacity: 1; }
+    .splash-sub {
+      font-family: var(--mono);
+      font-size: 0.52rem;
+      letter-spacing: 0.16em;
+      color: #3a4758;
+      text-transform: uppercase;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.5s ease 0.95s, transform 0.5s ease 0.95s;
+    }
+    .splash-overlay.active .splash-sub {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .splash-status {
+      position: absolute;
+      bottom: max(env(safe-area-inset-bottom, 0px), 20px);
+      left: 0; right: 0;
+      padding-bottom: 32px;
+      padding-inline: 16px;
+      text-align: center;
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.4s ease 1.1s;
+    }
+    .splash-overlay.active .splash-status { opacity: 1; }
+    .splash-status-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+    .splash-status-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 6px rgba(34,197,94,0.4);
+    }
+    .splash-status-text {
+      font-family: var(--mono);
+      font-size: 0.52rem;
+      letter-spacing: 0.1em;
+      color: var(--success);
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+    .splash-loader-track {
+      width: min(120px, 48vw);
+      height: 2px;
+      background: #141922;
+      border-radius: 1px;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+    .splash-loader-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 1px;
+    }
+    .splash-overlay.active .splash-loader-bar {
+      animation: splash-load 2.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.8s forwards;
+    }
+    @keyframes splash-load {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+
+    /* ── SKIP BUTTON ── */
+    .skip-btn {
+      position: absolute;
+      top: calc(env(safe-area-inset-top, 0px) + 16px);
+      right: 16px;
+      z-index: 10;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.18);
+      font-family: var(--sans);
+      font-size: 1.2rem;
+      font-weight: 300;
+      cursor: pointer;
+      padding: 8px;
+      line-height: 1;
+      transition: color 0.2s ease;
+    }
+    .skip-btn:active {
+      color: rgba(255,255,255,0.5);
+    }
+    .splash-skip-hint {
+      position: absolute;
+      top: calc(env(safe-area-inset-top, 0px) + 50px);
+      right: 12px;
+      z-index: 10;
+      min-width: 72px;
+      text-align: center;
+      font-family: var(--mono);
+      font-size: 0.46rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.26);
+      pointer-events: none;
+    }
+
+    @media (max-width: 420px) {
+      .boot-overlay {
+        padding: 28px 18px;
+      }
+      .boot-line {
+        font-size: 0.68rem;
+        line-height: 1.65;
+      }
+      .splash-logo {
+        width: min(88vw, 320px);
+      }
+      .splash-divider {
+        margin: 14px auto;
+      }
+      .splash-sub {
+        font-size: 0.48rem;
+        letter-spacing: 0.12em;
+      }
+      .splash-status {
+        padding-bottom: 22px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .boot-line {
+        white-space: normal;
+      }
+      .boot-line.ready {
+        white-space: nowrap;
+      }
+      .splash-bg svg {
+        width: min(84vw, 300px);
+        transform: translate(-50%, -52%);
+      }
+      .splash-content {
+        padding-inline: 12px;
+      }
+      .splash-logo {
+        width: min(90vw, 280px);
+      }
+      .splash-sub,
+      .splash-status-text,
+      .splash-skip-hint {
+        letter-spacing: 0.08em;
+      }
+    }
+
+    /* ── SCANLINE OVERLAY ── */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9000;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+      opacity: 0.4;
+    }
+
+    /* ── APP SHELL ── */
+    .app {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 0 12px 12px;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .app.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .system-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      margin-top: 14px;
+      font-family: var(--mono);
+      font-size: 0.64rem;
+      color: var(--success);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 600;
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse-dot 2.5s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; box-shadow: 0 0 4px rgba(34,197,94,0.6); }
+      50% { opacity: 0.4; box-shadow: 0 0 2px rgba(34,197,94,0.2); }
+    }
+
+    /* ── STICKY HEADER ── */
+    .sticky-header {
+        position: sticky;
+        top: 0;
+        z-index: 150;
+        background:
+          radial-gradient(circle at top center, rgba(56,189,248,0.16), transparent 58%),
+          linear-gradient(180deg, rgba(22, 29, 40, 0.96), rgba(22, 29, 40, 0.84) 68%, rgba(22, 29, 40, 0.62));
+        backdrop-filter: blur(10px);
+        width: 100vw;
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
+        margin-bottom: 14px;
+        padding:
+          calc(env(safe-area-inset-top, 0px) + 12px)
+          max(16px, calc((100vw - 480px) / 2 + 12px))
+          12px;
+        border-bottom: 1px solid var(--border);
+        box-shadow: 0 12px 22px rgba(4,8,15,0.22);
+        overflow-x: clip;
+      }
+    @media (max-width: 767px) {
+      .sticky-header {
+        background:
+          radial-gradient(circle at 50% 0%, rgba(56,189,248,0.28) 0%, rgba(56,189,248,0.12) 34%, transparent 72%),
+          radial-gradient(circle at 50% 100%, rgba(15,23,42,0.22) 0%, transparent 58%),
+          linear-gradient(180deg, rgba(22, 29, 40, 0.98), rgba(22, 29, 40, 0.88) 62%, rgba(22, 29, 40, 0.72));
+      }
+      .battle-size-row {
+        flex-wrap: wrap;
+      }
+      .resource-stats {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px 16px;
+        align-items: start;
+        justify-content: stretch;
+        padding: 10px 8px;
+      }
+      .resource-stat {
+        justify-content: center;
+        min-width: 0;
+      }
+      .resource-label {
+        font-size: 0.68rem;
+      }
+      .resource-value {
+        font-size: 1.35rem;
+      }
+      .resource-stat:last-child {
+        grid-column: 1 / -1;
+      }
+    }
+    .battle-size-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .battle-size-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+    }
+    .battle-size-options {
+      display: flex;
+      background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01)), var(--panel);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 2px;
+      border: 1px solid var(--border);
+    }
+    .battle-size-option {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .battle-size-option.active {
+      color: var(--text);
+      background: var(--accent);
+    }
+    .battle-size-option:not(.active):hover {
+      color: var(--text);
+      background: var(--panel-2);
+    }
+
+    .resource-stats {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      width: 100%;
+      margin: 0 0 8px;
+      padding: 10px 18px 10px;
+      background: transparent;
+      transition: all 0.25s ease;
+    }
+    .resource-stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 6px;
+      background: transparent;
+      border: none;
+      transition: all 0.25s ease;
+    }
+    .resource-label {
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 600;
+      transition: all 0.25s ease;
+    }
+    .resource-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      transition: all 0.25s ease;
+    }
+    .resource-value.minerals { color: var(--warning); }
+    .resource-value.gas { color: var(--setup); }
+    .resource-value.board { color: var(--success); }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    /* ── SECTIONS ── */
+    .section { margin-bottom: 16px; }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 4px;
+      margin-bottom: 8px;
+    }
+    .section-title {
+      font-family: var(--condensed);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      font-weight: 800;
+    }
+    .section-note {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      color: rgba(169,176,187,0.6);
+      letter-spacing: 0.03em;
+    }
+
+    /* ── HERO / BRIEFING ── */
+    .hero-card,
+    .launcher-card,
+    .quick-card,
+    .ref-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-card {
+      padding: 16px;
+      margin-bottom: 16px;
+      overflow: hidden;
+      position: relative;
+      background:
+        radial-gradient(circle at top right, rgba(214,163,58,0.18), transparent 34%),
+        radial-gradient(circle at 12% 18%, rgba(59,130,246,0.1), transparent 24%),
+        var(--panel);
+    }
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--accent);
+    }
+    .hero-kicker {
+      font-family: var(--mono);
+      color: var(--accent);
+      font-size: 0.66rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .hero-title {
+      font-family: var(--condensed);
+      font-size: 1.18rem;
+      font-weight: 800;
+      line-height: 1.22;
+      margin-bottom: 10px;
+      padding-right: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .hero-desc {
+      color: #d3d9e2;
+      font-size: 0.86rem;
+      line-height: 1.65;
+      margin-bottom: 14px;
+      max-width: 34ch;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .hero-note {
+      font-family: var(--mono);
+      color: var(--muted);
+      font-size: 0.7rem;
+      letter-spacing: 0.04em;
+      font-weight: 500;
+      margin-bottom: 12px;
+      padding-left: 10px;
+      border-left: 2px solid var(--border);
+    }
+    .hero-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .hero-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 44px;
+      border-radius: 12px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      font-family: var(--condensed);
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .hero-btn.primary {
+      background: rgba(234,179,8,0.18);
+      border-color: rgba(234,179,8,0.35);
+    }
+
+    /* ── CARDS ── */
+    .stack { display: grid; gap: 12px; }
+
+    .launcher-card {
+      display: block;
+      position: relative;
+      overflow: hidden;
+      padding: 16px;
+      min-height: 110px;
+    }
+    .launcher-card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--card-color);
+    }
+    .launcher-card:active { transform: translateY(1px); }
+    .card-top {
+      display: grid;
+      grid-template-columns: 52px minmax(0,1fr) 22px;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .card-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--panel-2), var(--panel-3));
+      border: 1px solid var(--border);
+      font-size: 1.5rem;
+    }
+    .card-name {
+      font-family: var(--condensed);
+      font-size: 1.04rem;
+      font-weight: 800;
+      margin-bottom: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .card-tagline {
+      font-family: var(--mono);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--card-color);
+      font-weight: 600;
+    }
+    .card-arrow {
+      color: var(--muted);
+      font-size: 1.35rem;
+      text-align: right;
+    }
+    .card-desc {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.48;
+      padding-left: 64px;
+    }
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding-left: 64px;
+      margin-top: 10px;
+    }
+    .mini-pill {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    /* ── QUICK / REF GRID ── */
+    .quick-grid,
+    .ref-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .quick-card,
+    .ref-card {
+      padding: 12px;
+    }
+    .quick-label,
+    .ref-label {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .quick-value,
+    .ref-value {
+      font-family: var(--condensed);
+      font-size: 0.94rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+    .quick-sub,
+    .ref-sub {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.74rem;
+    }
+
+    /* ── BRIEFING CARDS ── */
+    .briefing-grid {
+      display: grid;
+      gap: 10px;
+    }
+    .briefing-card {
+      padding: 14px 15px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background:
+        radial-gradient(circle at top left, rgba(59,130,246,0.08), transparent 28%),
+        linear-gradient(180deg, rgba(214,163,58,0.06), transparent 80%),
+        var(--panel);
+      box-shadow: var(--shadow);
+    }
+    .briefing-label {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 7px;
+    }
+    .briefing-text {
+      color: #d6dbe3;
+      font-size: 0.84rem;
+      line-height: 1.62;
+    }
+
+    /* ── INTEL DOSSIER ── */
+    .intel-card {
+      padding: 14px 15px;
+      background:
+        linear-gradient(180deg, rgba(214,163,58,0.09), rgba(214,163,58,0.02)),
+        radial-gradient(circle at top left, rgba(59,130,246,0.07), transparent 36%),
+        var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .intel-kicker {
+      font-family: var(--mono);
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .intel-title {
+      font-family: var(--condensed);
+      font-size: 1rem;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .intel-copy {
+      color: var(--muted);
+      font-size: 0.83rem;
+      line-height: 1.55;
+    }
+
+    /* ── PROCESS STEPS ── */
+    .process-list {
+      display: grid;
+      gap: 10px;
+    }
+    .process-step {
+      display: grid;
+      grid-template-columns: 32px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+      padding: 12px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+    }
+    .process-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-family: var(--condensed);
+      font-size: 0.8rem;
+      font-weight: 800;
+      color: #111;
+      background: var(--accent);
+    }
+    .process-step-title {
+      font-family: var(--condensed);
+      font-size: 0.88rem;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .process-step-copy {
+      font-size: 0.78rem;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    /* ── LINK LIST ── */
+    .link-list {
+      display: grid;
+      gap: 10px;
+    }
+    .mini-link {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text);
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+    .mini-link span:last-child { color: var(--muted); }
+
+    .footer {
+      text-align: center;
+      color: rgba(169,176,187,0.5);
+      font-family: var(--mono);
+      font-size: 0.66rem;
+      padding: 18px 8px 4px;
+      line-height: 1.7;
+      letter-spacing: 0.03em;
+    }
+
+    /* ── TAB BAR ── */
+    .tab-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: calc(58px + env(safe-area-inset-bottom));
+      padding-bottom: env(safe-area-inset-bottom);
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      display: flex;
+      z-index: 220;
+      opacity: 0;
+      transition: opacity 0.6s ease 0.3s;
+    }
+    .tab-bar.revealed { opacity: 1; }
+    .tab-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      font-family: var(--condensed);
+      font-size: 0.62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+    }
+    .tab-btn .icon { font-size: 1.08rem; }
+    .tab-btn.active {
+      color: var(--accent);
+      background: rgba(234,179,8,0.08);
+    }
+    .app-menu-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(3px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease;
+    }
+    .app-menu-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .app-menu-panel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: min(82vw, 320px);
+      background: linear-gradient(180deg, rgba(var(--menu-rgb),.18) 0%, rgba(30,25,16,.96) 18%, #12161f 100%);
+      border-right: 1px solid rgba(255,255,255,.08);
+      box-shadow: 18px 0 38px rgba(0,0,0,.4);
+      z-index: 9999;
+      transform: translateX(-105%);
+      opacity: 0;
+      transition: transform .24s ease, opacity .2s ease;
+      padding: calc(env(safe-area-inset-top,0px) + 24px) 14px calc(env(safe-area-inset-bottom,0px) + 18px);
+      display: flex;
+      flex-direction: column;
+    }
+    .app-menu-panel.open,
+    .app-menu-overlay.open .app-menu-panel {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    .app-menu-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 4px 14px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      margin-bottom: 12px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity .18s ease .03s, transform .22s ease .03s;
+    }
+    .app-menu-head-copy {
+      min-width: 0;
+    }
+    .app-menu-eyebrow {
+      color: rgba(var(--menu-rgb),.78);
+      font-size: .68rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .app-menu-title {
+      color: #f2f0e8;
+      font-size: 1.05rem;
+      font-weight: 800;
+    }
+    .app-menu-close {
+      width: 32px;
+      height: 32px;
+      flex: 0 0 32px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: #f2f0e8;
+      font-size: 1.2rem;
+      line-height: 1;
+      cursor: pointer;
+      transition: background .18s ease, border-color .18s ease, transform .18s ease;
+    }
+    .app-menu-close:hover {
+      background: rgba(255,255,255,.08);
+      border-color: rgba(255,255,255,.2);
+      transform: translateY(-1px);
+    }
+    .app-menu-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity .18s ease .06s, transform .22s ease .06s;
+    }
+    .app-menu-section-label {
+      padding: 10px 12px 2px;
+      color: var(--muted);
+      font-size: .8rem;
+      font-weight: 600;
+    }
+    .app-menu-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 12px;
+      color: #f2f0e8;
+      text-decoration: none;
+      font-weight: 700;
+      border: 1px solid transparent;
+      background: rgba(255,255,255,.02);
+      transition: transform .18s ease, background .18s ease, border-color .18s ease, color .18s ease;
+    }
+    .app-menu-link:hover {
+      background: rgba(255,255,255,.05);
+      border-color: rgba(255,255,255,.06);
+      transform: translateX(4px);
+    }
+    .app-menu-icon {
+      width: 18px;
+      text-align: center;
+      opacity: .9;
+    }
+    .app-menu-link.current {
+      color: #fff;
+      background: rgba(var(--accent-rgb),.14);
+      box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb),.68);
+    }
+    body.app-menu-open {
+      overflow: hidden;
+    }
+    body.app-menu-open .app-menu-head,
+    body.app-menu-open .app-menu-list {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 360px) {
+      .header { padding: 22px 16px 10px; }
+      .hero-title { font-size: 1.06rem; }
+      .hero-desc {
+        font-size: 0.8rem;
+        line-height: 1.55;
+        max-width: 30ch;
+      }
+      .hero-note {
+        font-size: 0.66rem;
+        line-height: 1.5;
+      }
+      .hero-actions,
+      .quick-grid,
+      .ref-grid { grid-template-columns: 1fr; }
+      .card-top { grid-template-columns: 48px minmax(0,1fr) 18px; gap: 10px; }
+      .card-desc, .card-meta { padding-left: 58px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── SPLASH SCREEN ── -->
+  <div class="splash-overlay hidden" id="splashOverlay">
+    <button class="skip-btn" id="skipSplash" aria-label="Skip intro">✕</button>
+    <div class="splash-skip-hint">Press X to skip</div>
+    <div class="splash-bg">
+      <div class="splash-glow-top"></div>
+      <div class="splash-glow-bottom"></div>
+      <svg viewBox="0 0 340 340" xmlns="http://www.w3.org/2000/svg">
+        <line x1="170" y1="170" x2="170" y2="10" stroke="#3b82f6" stroke-width="1.2" opacity="0.7"/>
+        <line x1="170" y1="170" x2="30" y2="250" stroke="#9333ea" stroke-width="1.2" opacity="0.7"/>
+        <line x1="170" y1="170" x2="310" y2="250" stroke="#d6a33a" stroke-width="1.2" opacity="0.7"/>
+        <circle cx="170" cy="10" r="2.5" fill="#3b82f6" opacity="0.8"/>
+        <circle cx="30" cy="250" r="2.5" fill="#9333ea" opacity="0.8"/>
+        <circle cx="310" cy="250" r="2.5" fill="#d6a33a" opacity="0.8"/>
+        <circle cx="170" cy="170" r="40" fill="none" stroke="#d6a33a" stroke-width="0.4" opacity="0.35"/>
+        <circle cx="170" cy="170" r="80" fill="none" stroke="#3b82f6" stroke-width="0.3" opacity="0.18"/>
+        <circle cx="170" cy="170" r="130" fill="none" stroke="#9333ea" stroke-width="0.25" opacity="0.12"/>
+        <circle cx="170" cy="170" r="2.5" fill="#d6a33a" opacity="0.6"/>
+      </svg>
+    </div>
+    <div class="splash-content">
+      <img src="SCTMG2.png" alt="StarCraft: The Miniatures Game" class="splash-logo">
+      <div class="splash-divider"></div>
+      <div class="splash-sub">Tactical Operations Interface</div>
+    </div>
+    <div class="splash-status">
+      <div class="splash-status-row">
+        <div class="splash-status-dot"></div>
+        <div class="splash-status-text">Establishing uplink</div>
+      </div>
+      <div class="splash-loader-track">
+        <div class="splash-loader-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BOOT SEQUENCE ── -->
+  <div class="boot-overlay" id="bootOverlay">
+    <button class="skip-btn" id="skipBoot" aria-label="Skip intro">✕</button>
+    <div class="boot-line" data-text="KOPRULU SECTOR TERMINAL v4.1.7"><span class="boot-text"></span></div>
+    <div class="boot-line" data-text="Initializing subsector relay..."><span class="boot-text"></span></div>
+    <div class="boot-line" data-text="Signal acquisition — Terran Dominion " data-suffix="✓" data-suffix-delay="1400"><span class="boot-text"></span><span class="boot-suffix"></span></div>
+    <div class="boot-line" data-text="Signal acquisition — Daelaam Protectorate " data-suffix="✓" data-suffix-delay="1400"><span class="boot-text"></span><span class="boot-suffix"></span></div>
+    <div class="boot-line" data-text="Signal acquisition — Zerg Swarm " data-caution="[CAUTION]" data-caution-delay="500" data-suffix="✓" data-suffix-delay="1600"><span class="boot-text"></span><span class="boot-caution"></span><span class="boot-suffix"></span></div>
+    <div class="boot-line highlight" data-text="Threat matrix loaded — three-faction active conflict"><span class="boot-text"></span></div>
+    <div class="boot-line" data-text="Force requisition databases ... " data-suffix="online" data-suffix-delay="900"><span class="boot-text"></span><span class="boot-suffix"></span></div>
+    <div class="boot-line" data-text="Operations directives ........ " data-suffix="online" data-suffix-delay="800"><span class="boot-text"></span><span class="boot-suffix"></span></div>
+    <div class="boot-line" data-text="Field protocol archives ...... " data-suffix="online" data-suffix-delay="700"><span class="boot-text"></span><span class="boot-suffix"></span></div>
+    <div class="boot-line ready" data-text="> TERMINAL READY "><span class="boot-text"></span><span class="ready-dots" id="readyDots"></span><span class="boot-cursor"></span></div>
+  </div>
+
+  <!-- ── APP ── -->
+    <div class="app">
+    <div class="sticky-header" id="stickyHeader">
+      <div class="battle-size-row">
+        <div class="battle-size-label">Theater Scale</div>
+        <div class="battle-size-options" role="tablist" aria-label="Battle size selector">
+          <button class="battle-size-option active" data-size="standard">Standard</button>
+          <button class="battle-size-option" data-size="skirmish">Skirmish</button>
+        </div>
+      </div>
+      <div class="resource-stats">
+        <div class="resource-stat">
+          <div class="resource-label">Minerals</div>
+          <div class="resource-value minerals" id="mineralsValue">2000</div>
+        </div>
+        <div class="resource-stat">
+          <div class="resource-label">Gas</div>
+          <div class="resource-value gas" id="gasValue">200</div>
+        </div>
+        <div class="resource-stat">
+          <div class="resource-label">Map</div>
+          <div class="resource-value board" id="boardValue">54×36</div>
+        </div>
+      </div>
+    </div>
+
+    <main>
+      <!-- ════════ HOME TAB ════════ -->
+      <section class="tab-content active" id="tab-home">
+        <div class="hero-card">
+          <div class="hero-kicker">// Incoming Transmission</div>
+          <div class="hero-title">Sector Command requires force deployment. Standing by for orders.</div>
+          <div class="hero-desc">Three factions are already moving. Command needs a force assembled, a battlefield locked, and an operational packet ready before the next engagement window opens.</div>
+          <div class="hero-note">Choose your force. Set the theater. Carry one clean packet into the field.</div>
+          <div class="hero-actions">
+            <a class="hero-btn primary" href="missions.html">Operations</a>
+            <a class="hero-btn" href="rules.html">Field Protocols</a>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <div class="section-title">Operational Intelligence</div>
+            <div class="section-note">sitrep</div>
+          </div>
+          <div class="briefing-grid">
+            <div class="briefing-card">
+              <div class="briefing-label">// Force Requisition</div>
+              <div class="briefing-text">Select a command structure by faction. Allocate mineral and gas reserves to units, upgrades, and tactical assets. The force you assemble here is what arrives at the theater — nothing more.</div>
+            </div>
+            <div class="briefing-card">
+              <div class="briefing-label">// Consolidated Packet</div>
+              <div class="briefing-text">Roster, mission parameters, deployment maps, and tactical cards are bundled into a single field packet. One document travels to the table. No hunting across files under fire.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <div class="section-title">Standing Orders</div>
+            <div class="section-note">engagement protocol</div>
+          </div>
+          <div class="process-list">
+            <div class="process-step">
+              <div class="process-num">1</div>
+              <div>
+                <div class="process-step-title">Requisition your strike force</div>
+                <div class="process-step-copy">Access force databases by faction. Set theater scale, assign units, select tactical cards, and commit upgrade packages within resource limits.</div>
+              </div>
+            </div>
+            <div class="process-step">
+              <div class="process-num">2</div>
+              <div>
+                <div class="process-step-title">Lock the operational theater</div>
+                <div class="process-step-copy">Select mission parameters, deployment configuration, and battlefield conditions. These define the engagement before the first unit enters the field.</div>
+              </div>
+            </div>
+            <div class="process-step">
+              <div class="process-num">3</div>
+              <div>
+                <div class="process-step-title">Deploy with one consolidated field packet</div>
+                <div class="process-step-copy">Export the full briefing — units, tactical cards, mission details, deployment maps — into a single document. Print it for the table or carry it on a mobile terminal.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <div class="section-title">Terminal Capabilities</div>
+            <div class="section-note">system overview</div>
+          </div>
+          <div class="quick-grid">
+            <div class="quick-card">
+              <div class="quick-label">Force Command</div>
+              <div class="quick-value">Full-spectrum army construction</div>
+              <div class="quick-sub">Build, audit, and export rosters by faction with live resource tracking and synergy analysis.</div>
+            </div>
+            <div class="quick-card">
+              <div class="quick-label">Field Ops</div>
+              <div class="quick-value">Clean decisions under pressure</div>
+              <div class="quick-sub">Mission selection, deployment maps, and rules protocol available on a single screen at the table.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <div class="section-title">Sector Assessment</div>
+            <div class="section-note">classified</div>
+          </div>
+          <div class="intel-card">
+            <div class="intel-kicker">// Threat Matrix</div>
+            <div class="intel-title">No faction holds permanent advantage. The theater shifts with every deployment.</div>
+            <div class="intel-copy">Terran strike forces rely on fire lanes, high ground, and coordinated support. Protoss war hosts commit elite assets with surgical precision — fewer bodies, every loss felt. Zerg broods trade individual strength for speed, mass, and the relentless pressure of mutation. The force you build defines which war you fight.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════ FACTIONS TAB ════════ -->
+      <section class="tab-content" id="tab-factions">
+        <div class="section">
+          <div class="section-head">
+            <div class="section-title">Force Databases</div>
+            <div class="section-note">select command</div>
+          </div>
+          <div class="stack">
+            <a href="zerg.html" class="launcher-card" style="--card-color: var(--zerg)">
+              <div class="card-top">
+                <div class="card-icon">🦂</div>
+                <div>
+                  <div class="card-name">Zerg</div>
+                  <div class="card-tagline">Swarm Command</div>
+                </div>
+                <div class="card-arrow">›</div>
+              </div>
+              <div class="card-desc">Expendable biomass, rapid mutation cycles, and creep-fueled forward momentum. The swarm trades precision for pressure.</div>
+              <div class="card-meta">
+                <div class="mini-pill">Aggression</div>
+                <div class="mini-pill">Mutation</div>
+                <div class="mini-pill">Creep</div>
+              </div>
+            </a>
+
+            <a href="terran.html" class="launcher-card" style="--card-color: var(--terran)">
+              <div class="card-top">
+                <div class="card-icon">🎖️</div>
+                <div>
+                  <div class="card-name">Terran</div>
+                  <div class="card-tagline">Dominion Command</div>
+                </div>
+                <div class="card-arrow">›</div>
+              </div>
+              <div class="card-desc">Disciplined infantry, mechanized support, and overlapping fire lanes. Combined arms doctrine built for holding ground.</div>
+              <div class="card-meta">
+                <div class="mini-pill">Combined Arms</div>
+                <div class="mini-pill">Ranged</div>
+                <div class="mini-pill">High Ground</div>
+              </div>
+            </a>
+
+            <a href="protoss.html" class="launcher-card" style="--card-color: var(--protoss)">
+              <div class="card-top">
+                <div class="card-icon">⚡</div>
+                <div>
+                  <div class="card-name">Protoss</div>
+                  <div class="card-tagline">Daelaam Command</div>
+                </div>
+                <div class="card-arrow">›</div>
+              </div>
+              <div class="card-desc">Elite warriors, regenerating shields, and psionic warfare. Every unit is an investment — every loss costs the war host.</div>
+              <div class="card-meta">
+                <div class="mini-pill">Elite</div>
+                <div class="mini-pill">Shielding</div>
+                <div class="mini-pill">Psionic</div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════════ SETUP TAB ════════ -->
+      <section class="tab-content" id="tab-setup">
+        <div class="section">
+          <div class="section-head">
+            <div class="section-title">Theater Operations</div>
+            <div class="section-note">pre-deployment</div>
+          </div>
+          <div class="stack">
+            <a href="missions.html" class="launcher-card" style="--card-color: var(--setup)">
+              <div class="card-top">
+                <div class="card-icon">🗺️</div>
+                <div>
+                  <div class="card-name">Operations Directives</div>
+                  <div class="card-tagline">Missions & Deployment</div>
+                </div>
+                <div class="card-arrow">›</div>
+              </div>
+              <div class="card-desc">Select mission parameters, deployment configuration, and battlefield conditions before committing forces.</div>
+              <div class="card-meta">
+                <div class="mini-pill">Objectives</div>
+                <div class="mini-pill">Deployment</div>
+                <div class="mini-pill">Maps</div>
+              </div>
+            </a>
+            <a href="rules.html" class="launcher-card" style="--card-color: var(--rules)">
+              <div class="card-top">
+                <div class="card-icon">📘</div>
+                <div>
+                  <div class="card-name">Field Protocols</div>
+                  <div class="card-tagline">Rules & Keywords</div>
+                </div>
+                <div class="card-arrow">›</div>
+              </div>
+              <div class="card-desc">Core engagement rules, phase sequences, and keyword definitions accessible at the point of contact.</div>
+              <div class="card-meta">
+                <div class="mini-pill">Phases</div>
+                <div class="mini-pill">Keywords</div>
+                <div class="mini-pill">Quick Check</div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <div class="section-title">Deployment Sequence</div>
+          </div>
+          <div class="link-list">
+            <a href="zerg.html" class="mini-link"><span>1. Requisition strike force</span><span>›</span></a>
+            <a href="missions.html" class="mini-link"><span>2. Lock mission and deployment</span><span>›</span></a>
+            <a href="rules.html" class="mini-link"><span>3. Reference protocols during engagement</span><span>›</span></a>
+          </div>
+        </div>
+      </section>
+
+      <div class="footer">
+        Koprulu Sector Terminal // StarCraft: The Miniatures Game<br>
+        Unauthorized access will be met with orbital bombardment
+      </div>
+    </main>
+  </div>
+
+  <div class="app-menu-overlay" id="appMenuOverlay">
+    <aside class="app-menu-panel" id="appMenuPanel" aria-hidden="true">
+    </aside>
+  </div>
+
+  <!-- ── TAB BAR ── -->
+  <nav class="tab-bar" aria-label="Bottom navigation">
+    <button class="tab-btn" type="button" id="bottomMenuBtn"><span class="icon">☰</span><span>Menu</span></button>
+    <button class="tab-btn active" data-tab="home"><span class="icon">⌂</span><span>Command</span></button>
+    <button class="tab-btn" data-tab="factions"><span class="icon">⚔</span><span>Forces</span></button>
+    <button class="tab-btn" data-tab="setup"><span class="icon">🗺</span><span>Theater</span></button>
+  </nav>
+
+  <script src="./runtime/payloads/reference-page-shell.js"></script>
+  <script>
+    /* ── BOOT → SPLASH → APP ── */
+    (function() {
+      const splash = document.getElementById('splashOverlay');
+      const boot = document.getElementById('bootOverlay');
+      const appEl = document.querySelector('.app');
+      const tabBar = document.querySelector('.tab-bar');
+      const key = 'sctmg_intro_seen';
+
+      function revealApp() {
+        appEl.classList.add('revealed');
+        tabBar.classList.add('revealed');
+      }
+
+      if (sessionStorage.getItem(key)) {
+        splash.classList.add('hidden');
+        boot.classList.add('hidden');
+        revealApp();
+        return;
+      }
+
+      function skipAll() {
+        sessionStorage.setItem(key, '1');
+        boot.classList.add('fade-out');
+        splash.classList.add('fade-out');
+        revealApp();
+        setTimeout(() => {
+          boot.classList.add('hidden');
+          splash.classList.add('hidden');
+        }, 600);
+      }
+
+      document.getElementById('skipBoot').addEventListener('click', skipAll);
+      document.getElementById('skipSplash').addEventListener('click', skipAll);
+
+      /* Phase 1: Boot sequence runs immediately */
+      runBoot();
+
+      function runBoot() {
+        const lines = Array.from(boot.querySelectorAll('.boot-line'));
+        const charSpeed = 28;
+        const linePause = 350;
+        let lineIndex = 0;
+
+        function typeLine() {
+          if (lineIndex >= lines.length) return;
+          const line = lines[lineIndex];
+          const textEl = line.querySelector('.boot-text');
+          const fullText = line.dataset.text || '';
+          const suffix = line.dataset.suffix;
+          const suffixDelay = parseInt(line.dataset.suffixDelay, 10) || 400;
+          const caution = line.dataset.caution;
+          const cautionDelay = parseInt(line.dataset.cautionDelay, 10) || 400;
+          const isReady = line.classList.contains('ready');
+
+          line.classList.add('visible');
+
+          let typingCursor = null;
+          if (!isReady) {
+            typingCursor = document.createElement('span');
+            typingCursor.className = 'boot-typing-cursor';
+            line.appendChild(typingCursor);
+          }
+
+          let charIndex = 0;
+          const typeInterval = setInterval(() => {
+            if (charIndex >= fullText.length) {
+              clearInterval(typeInterval);
+              afterTyping();
+              return;
+            }
+            textEl.textContent += fullText[charIndex];
+            charIndex++;
+          }, charSpeed);
+
+          function afterTyping() {
+            if (caution) {
+              setTimeout(() => {
+                const cautionEl = line.querySelector('.boot-caution');
+                if (cautionEl) {
+                  cautionEl.textContent = caution + ' ';
+                  cautionEl.classList.add('visible');
+                }
+                if (suffix) {
+                  setTimeout(() => {
+                    if (typingCursor) typingCursor.remove();
+                    const suffixEl = line.querySelector('.boot-suffix');
+                    if (suffixEl) {
+                      suffixEl.textContent = suffix;
+                      suffixEl.classList.add('visible');
+                    }
+                    setTimeout(() => { lineIndex++; typeLine(); }, linePause);
+                  }, suffixDelay);
+                } else {
+                  if (typingCursor) typingCursor.remove();
+                  setTimeout(() => { lineIndex++; typeLine(); }, linePause);
+                }
+              }, cautionDelay);
+            } else if (suffix) {
+              setTimeout(() => {
+                if (typingCursor) typingCursor.remove();
+                const suffixEl = line.querySelector('.boot-suffix');
+                if (suffixEl) {
+                  suffixEl.textContent = suffix;
+                  suffixEl.classList.add('visible');
+                }
+                setTimeout(() => { lineIndex++; typeLine(); }, linePause);
+              }, suffixDelay);
+            } else if (isReady) {
+              const dotsContainer = document.getElementById('readyDots');
+              const readyCursor = line.querySelector('.boot-cursor');
+              readyCursor.classList.add('active');
+              const dotCount = 12;
+              const dotInterval = 200;
+              let dotIndex = 0;
+              const dotTimer = setInterval(() => {
+                if (dotIndex >= dotCount) {
+                  clearInterval(dotTimer);
+                  /* Phase 2: Fade boot out, show splash */
+                  setTimeout(() => {
+                    boot.classList.add('fade-out');
+                    setTimeout(() => {
+                      boot.classList.add('hidden');
+                      showSplash();
+                    }, 950);
+                  }, 1300);
+                  return;
+                }
+                dotsContainer.textContent += '.';
+                dotIndex++;
+              }, dotInterval);
+            } else {
+              if (typingCursor) typingCursor.remove();
+              setTimeout(() => { lineIndex++; typeLine(); }, linePause);
+            }
+          }
+        }
+
+        typeLine();
+      }
+
+      /* Phase 2: Splash screen as the payoff */
+      function showSplash() {
+        splash.classList.remove('hidden');
+        requestAnimationFrame(() => {
+          splash.classList.add('active');
+        });
+        setTimeout(() => {
+          splash.classList.add('fade-out');
+          revealApp();
+          sessionStorage.setItem(key, '1');
+          setTimeout(() => splash.classList.add('hidden'), 700);
+        }, 3600);
+      }
+    })();
+
+    /* ── APP LOGIC ── */
+    const SIZE_DATA = {
+      standard: { minerals: '2000', gas: '200', board: '54×36' },
+      skirmish: { minerals: '1000', gas: '100', board: '36×36' }
+    };
+
+      const sizeButtons = Array.from(document.querySelectorAll('.battle-size-option'));
+      const tabButtons = Array.from(document.querySelectorAll('.tab-btn[data-tab]'));
+      const tabs = Array.from(document.querySelectorAll('.tab-content'));
+      const stickyHeader = document.getElementById('stickyHeader');
+
+    function setSize(size) {
+      const data = SIZE_DATA[size];
+      document.getElementById('mineralsValue').textContent = data.minerals;
+      document.getElementById('gasValue').textContent = data.gas;
+      document.getElementById('boardValue').textContent = data.board;
+      sizeButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.size === size));
+      localStorage.setItem('sctmg_home_battle_size', size);
+    }
+
+      function setTab(tabName, options = {}) {
+        const { initial = false } = options;
+        const validTabs = ['home', 'factions', 'setup'];
+        if (!validTabs.includes(tabName)) tabName = 'home';
+        document.body.classList.toggle('command-tab-active', tabName === 'home');
+        tabButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabName));
+        tabs.forEach(tab => tab.classList.toggle('active', tab.id === `tab-${tabName}`));
+        localStorage.setItem('sctmg_home_tab', tabName);
+        if (initial) return;
+        const targetTop = stickyHeader ? stickyHeader.offsetTop : 0;
+        window.scrollTo({ top: targetTop, behavior: 'auto' });
+      }
+
+      sizeButtons.forEach(btn => btn.addEventListener('click', () => setSize(btn.dataset.size)));
+      tabButtons.forEach(btn => btn.addEventListener('click', () => setTab(btn.dataset.tab)));
+      setSize(localStorage.getItem('sctmg_home_battle_size') || 'standard');
+      setTab(localStorage.getItem('sctmg_home_tab') || 'home', { initial: true });
+
+  </script>
+</body>
+</html>
