@@ -1170,13 +1170,13 @@ function render(){
 
   <!-- ARMY SECTION -->
   ${builderBarHtml()}
-  ${tacticalBarHtml()}
   ${tacticalModalHtml()}
   <div class="army-section">
     <div class="army-toggle">
       ${["p1","p2"].map(id=>{const a=ARMIES[id];return`<button class="${S.viewingArmy===id?"active":""}" data-view-army="${id}"
         style="color:${S.viewingArmy===id?a.color:"var(--dim)"};background:${S.viewingArmy===id?alpha(a.color,.14):"var(--surfaceAlt)"};border-bottom-color:${S.viewingArmy===id?a.color:"transparent"};${S.viewingArmy===id?`box-shadow:inset 0 0 0 1px ${alpha(a.color,.22)}`:""}">${a.label} (${a.units.length})</button>`}).join("")}
     </div>
+    ${tacticalBarHtml(S.viewingArmy)}
     <div class="filter-chips">
       ${[{id:"all",l:`All (${allU.length})`},{id:"reserves",l:`Reserves (${rsv.length})`},{id:"battlefield",l:`Board (${board.length})`},{id:"destroyed",l:`Destroyed (${dest.length})`}].map(f=>`<button class="filter-chip ${S.armyFilter===f.id?"active":""}" data-filter="${f.id}"
         style="border-color:${S.armyFilter===f.id?army.color:"var(--border)"};background:${S.armyFilter===f.id?alpha(army.color,.12):"transparent"};color:${S.armyFilter===f.id?army.color:"var(--dim)"}">${f.l}</button>`).join("")}
@@ -1281,28 +1281,21 @@ function abilityListHtml(title,list){
     </div>`}).join("")}
   </div>`:"";
 }
-function tacticalBarHtml(){
-  const t1=ARMIES.p1?.tactical||[];
-  const t2=ARMIES.p2?.tactical||[];
-  const total=t1.length+t2.length;
-  if(!total)return `<div class="builder-bar" style="opacity:.5">
+function tacticalBarHtml(player){
+  const army=ARMIES[player]||{};
+  const cards=army.tactical||[];
+  const color=army.color||"#7b93a8";
+  if(!cards.length)return "";
+  const readyCount=cards.filter(c=>c.state==="ready").length;
+  const pool=availableResource(player);
+  const total=cards.reduce((s,c)=>s+Number(c.resourceValue||0),0);
+  const resLabel=factionResourceLabel(player);
+  return `<div class="builder-bar" style="margin:0 0 8px;border-color:${alpha(color,.25)}">
     <div style="min-width:0">
       <div class="builder-title">Tactical Cards</div>
-      <div class="builder-summary">No tactical cards imported. Re-import armies to load them.</div>
+      <div class="builder-summary">${readyCount}${"/"+ cards.length} ready · ${pool}${"/"+ total} ${resLabel} available</div>
     </div>
-  </div>`;
-  const r1=t1.filter(c=>c.state==="ready").length;
-  const r2=t2.filter(c=>c.state==="ready").length;
-  const pool1=availableResource("p1");
-  const pool2=availableResource("p2");
-  const res1=factionResourceLabel("p1");
-  const res2=factionResourceLabel("p2");
-  return `<div class="builder-bar">
-    <div style="min-width:0">
-      <div class="builder-title">Tactical Cards</div>
-      <div class="builder-summary">${t1.length?`P1: ${r1}${"/"+ t1.length} ready · ${pool1} ${res1}`:"P1: none"}${t2.length?` · P2: ${r2}${"/"+ t2.length} ready · ${pool2} ${res2}`:""}</div>
-    </div>
-    <button class="builder-open-btn" data-open-tactical>Open</button>
+    <button class="builder-open-btn" data-open-tactical style="border-color:${alpha(color,.4)};color:${color}">Open</button>
   </div>`;
 }
 function tacticalModalHtml(){
