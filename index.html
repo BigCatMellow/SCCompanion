@@ -299,6 +299,33 @@ input,select{font-family:inherit}
 
 .app-shell{max-width:430px;margin:0 auto;min-height:100vh}
 .tab-content{padding-bottom:56px}
+/* ─── TACTICAL CARDS ─── */
+.tac-section{padding:0 12px 8px;border-bottom:1px solid rgba(255,255,255,.04)}
+.tac-header{display:flex;align-items:center;justify-content:space-between;padding:8px 0}
+.tac-resource-pool{display:flex;gap:6px;align-items:center}
+.tac-pool-badge{padding:3px 10px;border-radius:100px;font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.tac-card{
+  display:flex;align-items:center;gap:8px;padding:10px 12px;margin-bottom:4px;
+  border-radius:var(--r);border:1px solid var(--border);
+  background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.01)),var(--surface);
+  transition:opacity .2s,border-color .15s;
+}
+.tac-card.exhausted{opacity:.45;border-left-color:var(--dim)}
+.tac-card .tac-info{flex:1;min-width:0}
+.tac-card .tac-name{font-size:0.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tac-card.exhausted .tac-name{text-decoration:line-through;color:var(--dim)}
+.tac-card .tac-meta{font-size:0.65rem;color:var(--dim);font-weight:500;margin-top:1px}
+.tac-state-btn{
+  padding:5px 10px;border-radius:100px;font-size:0.6rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.04em;border:1.5px solid var(--border);
+  transition:all .15s;white-space:nowrap;
+}
+.tac-state-btn.ready{border-color:var(--success);color:var(--success);background:rgba(34,197,94,.1)}
+.tac-state-btn.ability{border-color:var(--warning);color:var(--warning);background:rgba(251,191,36,.1)}
+.tac-state-btn.resource{border-color:var(--gas);color:var(--gas);background:rgba(34,211,238,.1)}
+.tac-resource-badge{padding:3px 8px;border-radius:var(--rs);font-size:0.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.02em;white-space:nowrap}
+.tac-expand{border-top:1px solid rgba(255,255,255,.04);padding:8px 12px 4px;animation:revealBlock .2s ease}
+
 .danger-zone{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:14px 12px 74px}
 .reset-game-btn{width:25%;min-width:92px;padding:8px 10px;border-radius:var(--rs);border:1.5px solid #8b4049;background:rgba(139,64,73,.12);color:#ff8b96;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;box-shadow:inset 0 0 0 1px rgba(255,139,150,.08)}
 </style>
@@ -357,7 +384,7 @@ const BUILDER_FACTIONS={
   terran:{label:"Terran",key:"sc-tmg-terran-v1",href:"Army%20Builder/terran.html",payload:"Army%20Builder/runtime/payloads/terran.js",color:"#3b82f6"},
   protoss:{label:"Protoss",key:"sc-tmg-protoss-v1",href:"Army%20Builder/protoss.html",payload:"Army%20Builder/runtime/payloads/protoss.js",color:"#d4af37"}
 };
-function emptyArmy(id){return {label:id.toUpperCase(),color:"#7b93a8",units:[]}}
+function emptyArmy(id){return {label:id.toUpperCase(),color:"#7b93a8",units:[],tactical:[]}}
 const ARMIES={p1:emptyArmy("p1"),p2:emptyArmy("p2")};
 
 const MISSION_SETUP=window.__missionSetupData||{missions:[],maps:[]};
@@ -373,6 +400,7 @@ function newGameState(){
     scoredMarkersByRound:{},
     builderMsg:"",
     builderModal:false,
+    tacticalModal:false,
     missionModal:false,
     logModal:false,
     readmeModal:false,
@@ -388,7 +416,7 @@ let saveReady=false;
 function saveGameState(){
   if(!saveReady)return;
   try{
-    const state={...S,builderModal:false,missionModal:false,logModal:false,readmeModal:false,turnModal:false,supplyMsg:""};
+    const state={...S,builderModal:false,tacticalModal:false,missionModal:false,logModal:false,readmeModal:false,turnModal:false,supplyMsg:""};
     localStorage.setItem(GAME_SAVE_KEY,JSON.stringify({state,armies:{p1:ARMIES.p1,p2:ARMIES.p2}}));
   }catch(e){}
 }
@@ -411,6 +439,7 @@ function loadGameState(){
       markers:(st.mission||{}).markers||{}
     };
     S.builderModal=false;
+    S.tacticalModal=false;
     S.missionModal=false;
     S.logModal=false;
     S.readmeModal=false;
@@ -439,15 +468,42 @@ function addLog(text){
 function eachUnit(fn){
   ["p1","p2"].forEach(player=>(ARMIES[player]?.units||[]).forEach(u=>fn(u,player)));
 }
+function eachTactical(fn){
+  ["p1","p2"].forEach(player=>(ARMIES[player]?.tactical||[]).forEach(c=>fn(c,player)));
+}
+const RESOURCE_LABELS={zerg:"BM",terran:"CP",protoss:"PE"};
+const RESOURCE_NAMES={zerg:"Biomass",terran:"Command Points",protoss:"Psionic Energy"};
+function factionResourceLabel(player){
+  const army=ARMIES[player];
+  if(!army)return "Resource";
+  const faction=Object.keys(BUILDER_FACTIONS).find(k=>army.label?.toLowerCase().includes(k));
+  return RESOURCE_LABELS[faction]||army.tactical?.[0]?.resourceType||"Resource";
+}
+function factionResourceName(player){
+  const army=ARMIES[player];
+  if(!army)return "Resource";
+  const faction=Object.keys(BUILDER_FACTIONS).find(k=>army.label?.toLowerCase().includes(k));
+  return RESOURCE_NAMES[faction]||"Resource";
+}
+function refreshTacticalCards(){
+  eachTactical(c=>{c.state="ready"});
+}
+function availableResource(player){
+  const cards=ARMIES[player]?.tactical||[];
+  return cards.filter(c=>c.state==="ready").reduce((sum,c)=>sum+Number(c.resourceValue||0),0);
+}
 function saveRoundActivationState(round=S.round){
   S.roundStates=S.roundStates||{};
   const units={};
   eachUnit(u=>{units[u.key]={activated:!!u.activated}});
-  S.roundStates[round]={units};
+  const tactical={};
+  eachTactical(c=>{tactical[c.key]={state:c.state||"ready"}});
+  S.roundStates[round]={units,tactical};
 }
 function restoreRoundActivationState(round){
-  const saved=S.roundStates?.[round]?.units;
-  eachUnit(u=>{u.activated=saved?.[u.key]?.activated||false});
+  const saved=S.roundStates?.[round];
+  eachUnit(u=>{u.activated=saved?.units?.[u.key]?.activated||false});
+  eachTactical(c=>{c.state=saved?.tactical?.[c.key]?.state||"ready"});
 }
 function setRound(next){
   const round=Math.max(1,Math.min(5,Number(next)||1));
@@ -456,7 +512,12 @@ function setRound(next){
   if(round>previous)applyMissionMarkerScore({silentNoScore:true,autoAdvance:true});
   saveRoundActivationState(previous);
   S.round=round;
-  restoreRoundActivationState(round);
+  if(round>previous){
+    refreshTacticalCards();
+    addLog(`Round ${round}: all tactical cards refreshed to Ready.`);
+  }else{
+    restoreRoundActivationState(round);
+  }
   S.passed={p1:false,p2:false};
   addLog(`Round changed from ${previous} to ${round}.`);
   render();
@@ -485,6 +546,7 @@ function setThemeGlow(){
 }
 
 function units(){return ARMIES[S.viewingArmy]?.units||[]}
+function tacticalCards(){return ARMIES[S.viewingArmy]?.tactical||[]}
 function filtered(){return S.armyFilter==="all"?units():units().filter(u=>u.location===S.armyFilter)}
 function phaseColor(){return PHASES[S.phase].color}
 function selScale(){return SCALES.find(s=>s.id===S.mission.scaleId)||SCALES[1]}
@@ -855,6 +917,22 @@ function normalizeBuilderUnit(entry,payload,index){
     keywords:unit.keywords||unit.tags||[]
   };
 }
+function normalizeTacticalCard(card,index){
+  const slots=Object.entries(card.slots||card.additionalSlots||{}).map(([slot,count])=>`${slot.toUpperCase()} +${count}`);
+  return {
+    key:`tactical-${card.id||card.name||index}-${index}`,
+    id:card.id||"",
+    name:card.name||"Tactical Card",
+    cost:Number(card.cost??card.gasCost??0),
+    resource:card.resource||"",
+    resourceType:card.resourceType||"",
+    resourceValue:card.resourceValue??"",
+    state:"ready",
+    slots,
+    abilities:(card.abilities||[]).map(a=>({name:a.name||"Ability",phase:a.phase||"Any Phase",type:a.type||"",desc:cleanText(a.description||a.text||"")})),
+    keywords:[...(card.factionTags||[])]
+  };
+}
 async function importBuilderRoster(player,faction){
   const saved=savedBuilder(faction);
   if(!saved||(saved.units||[]).length===0){S.builderMsg=`No saved ${BUILDER_FACTIONS[faction].label} roster found. Open the builder and save a list first.`;render();return}
@@ -862,8 +940,9 @@ async function importBuilderRoster(player,faction){
     S.builderMsg=`Importing ${BUILDER_FACTIONS[faction].label}...`;render();
     const payload=await loadBuilderPayload(faction);
     const units=(saved.units||[]).map((entry,index)=>normalizeBuilderUnit(entry,payload,index));
-    ARMIES[player]={label:`${player.toUpperCase()} — ${BUILDER_FACTIONS[faction].label}`,color:BUILDER_FACTIONS[faction].color,units};
-    addLog(`${player.toUpperCase()} imported ${BUILDER_FACTIONS[faction].label} roster with ${units.length} units.`);
+    const tactical=(saved.tactical||[]).map((id,index)=>(payload.tacticalCards||[]).find(card=>card.id===id)).filter(Boolean).map(normalizeTacticalCard);
+    ARMIES[player]={label:`${player.toUpperCase()} — ${BUILDER_FACTIONS[faction].label}`,color:BUILDER_FACTIONS[faction].color,units,tactical};
+    addLog(`${player.toUpperCase()} imported ${BUILDER_FACTIONS[faction].label} roster with ${units.length} units and ${tactical.length} tactical cards.`);
     S.viewingArmy=player;
     S.armyFilter="all";
     S.expanded={};
@@ -871,7 +950,7 @@ async function importBuilderRoster(player,faction){
     if(saved.missionId)S.mission.missionId=saved.missionId;
     if(saved.mapId)S.mission.mapId=saved.mapId;
     S.builderModal=false;
-    S.builderMsg=`Imported ${units.length} ${BUILDER_FACTIONS[faction].label} unit${units.length===1?"":"s"} to ${player.toUpperCase()}.`;
+    S.builderMsg=`Imported ${units.length} ${BUILDER_FACTIONS[faction].label} unit${units.length===1?"":"s"} and ${tactical.length} tactical card${tactical.length===1?"":"s"} to ${player.toUpperCase()}.`;
   }catch(err){
     S.builderMsg=`Could not import ${BUILDER_FACTIONS[faction].label}: ${err.message||err}`;
   }
@@ -993,6 +1072,7 @@ function render(){
   const action=actions[S.selAction]||actions[0];
   const army=ARMIES[S.viewingArmy];
   const allU=units();
+  const allT=tacticalCards();
   const board=allU.filter(u=>u.location==="battlefield");
   const rsv=allU.filter(u=>u.location==="reserves");
   const dest=allU.filter(u=>u.location==="destroyed");
@@ -1086,6 +1166,8 @@ function render(){
 
   <!-- ARMY SECTION -->
   ${builderBarHtml()}
+  ${tacticalBarHtml()}
+  ${tacticalModalHtml()}
   <div class="army-section">
     <div class="army-toggle">
       ${["p1","p2"].map(id=>{const a=ARMIES[id];return`<button class="${S.viewingArmy===id?"active":""}" data-view-army="${id}"
@@ -1195,6 +1277,74 @@ function abilityListHtml(title,list){
     </div>`}).join("")}
   </div>`:"";
 }
+function tacticalBarHtml(){
+  const t1=ARMIES.p1?.tactical||[];
+  const t2=ARMIES.p2?.tactical||[];
+  const total=t1.length+t2.length;
+  if(!total)return "";
+  const r1=t1.filter(c=>c.state==="ready").length;
+  const r2=t2.filter(c=>c.state==="ready").length;
+  const pool1=availableResource("p1");
+  const pool2=availableResource("p2");
+  const res1=factionResourceLabel("p1");
+  const res2=factionResourceLabel("p2");
+  return `<div class="builder-bar">
+    <div style="min-width:0">
+      <div class="builder-title">Tactical Cards</div>
+      <div class="builder-summary">${t1.length?`P1: ${r1}${"/"+ t1.length} ready · ${pool1} ${res1}`:"P1: none"}${t2.length?` · P2: ${r2}${"/"+ t2.length} ready · ${pool2} ${res2}`:""}</div>
+    </div>
+    <button class="builder-open-btn" data-open-tactical>Open</button>
+  </div>`;
+}
+function tacticalModalHtml(){
+  if(!S.tacticalModal)return "";
+  const sections=["p1","p2"].map(player=>{
+    const army=ARMIES[player];
+    const cards=army?.tactical||[];
+    if(!cards.length)return "";
+    const color=army.color||"#7b93a8";
+    const resLabel=factionResourceLabel(player);
+    const resName=factionResourceName(player);
+    const pool=availableResource(player);
+    const total=cards.reduce((s,c)=>s+Number(c.resourceValue||0),0);
+    const readyCount=cards.filter(c=>c.state==="ready").length;
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div>
+          <div class="modal-sub" style="color:${color};font-weight:700;margin:0">${esc(army.label||player.toUpperCase())}</div>
+          <div style="font-size:0.6rem;color:var(--dim);font-weight:500;margin-top:2px">${readyCount}${"/"+ cards.length} ready · ${pool}${"/"+ total} ${resLabel} available</div>
+        </div>
+        <span class="tac-pool-badge" style="background:${alpha(color,.12)};color:${color}">${pool} ${resLabel}</span>
+      </div>
+      ${cards.map(card=>{
+        const isReady=card.state==="ready";
+        const isAbility=card.state==="ability";
+        const exhausted=!isReady;
+        const stateLabel=isReady?"Ready":isAbility?"Ability":resLabel;
+        const stateClass=isReady?"ready":isAbility?"ability":"resource";
+        const open=!!S.expanded[card.key];
+        const resVal=card.resourceValue?`+${card.resourceValue} ${card.resourceType||resLabel}`:"";
+        return `<div class="tac-card ${exhausted?"exhausted":""}" style="border-left:4px solid ${isReady?color:"var(--dim)"}">
+          <div class="tac-info" ${card.abilities?.length?`data-expand="${card.key}" style="cursor:pointer"`:""}>
+            <div class="tac-name">${esc(card.name)}</div>
+            <div class="tac-meta">${resVal}${card.slots?.length?` · ${card.slots.join(", ")}`:""}</div>
+          </div>
+          <button class="tac-state-btn ${stateClass}" data-tac-cycle="${card.key}" data-tac-player="${player}">${stateLabel}</button>
+          ${card.abilities?.length?`<span class="unit-chevron ${open?"open":""}" data-expand="${card.key}" style="cursor:pointer">›</span>`:""}
+        </div>
+        ${open&&card.abilities?.length?`<div class="tac-expand">${abilityListHtml("Card Abilities",card.abilities)}</div>`:""}`;
+      }).join("")}
+    </div>`;
+  }).join("");
+  return `<div class="modal-backdrop" data-close-tactical></div>
+  <div class="modal-panel" style="max-height:80vh;overflow-y:auto">
+    <div class="modal-head">
+      <div><div class="modal-title">Tactical Cards</div><div class="modal-sub">Tap a card's state to cycle: Ready → Ability → Resource → Ready. Cards refresh each round.</div></div>
+      <button class="modal-close" data-close-tactical>×</button>
+    </div>
+    ${sections||'<div class="empty-msg">No tactical cards imported. Import armies from the builder first.</div>'}
+  </div>`;
+}
 function unitCardHtml(u){
   const loc=LOC[u.location]||LOC.reserves;
   const dead=u.location==="destroyed"||u.models.current===0;
@@ -1205,7 +1355,7 @@ function unitCardHtml(u){
   const armyColor=ARMIES[owner]?.color||"#7b93a8";
   const locShort={reserves:"Res",battlefield:"Board",destroyed:"Dead"}[u.location]||loc.label;
   const activeSupply=effectiveSupply(u);
-  const supplyText=unitSupplyTiers(u).length&&activeSupply!==Number(u.supply||0)?`S${activeSupply}/${u.supply}`:`S${activeSupply}`;
+  const supplyText=unitSupplyTiers(u).length&&activeSupply!==Number(u.supply||0)?`S${activeSupply}${"/"+ u.supply}`:`S${activeSupply}`;
   return`<div class="unit-card ${roleClass} ${dead?"dead":""}" style="--unit-color-rgb:${colorRgb(armyColor)}">
     <div class="unit-row" data-expand="${u.key}">
       <span class="loc-dot" style="background:${loc.color};box-shadow:0 0 6px ${loc.color}55"></span>
@@ -1247,6 +1397,27 @@ function unitCardHtml(u){
 
 function findUnitOwner(key){
   return ["p1","p2"].find(id=>(ARMIES[id]?.units||[]).some(u=>u.key===key))||"";
+}
+function findTactical(key){
+  for(const id of ["p1","p2"]){
+    const card=(ARMIES[id]?.tactical||[]).find(c=>c.key===key);
+    if(card)return {card,player:id};
+  }
+  return null;
+}
+function cycleTacticalState(key,player){
+  const found=findTactical(key);
+  if(!found)return;
+  const card=found.card;
+  const resLabel=factionResourceLabel(found.player);
+  const prev=card.state||"ready";
+  if(prev==="ready")card.state="ability";
+  else if(prev==="ability")card.state="resource";
+  else card.state="ready";
+  const labels={ready:"Ready",ability:"Exhausted (Ability)",resource:`Exhausted (${resLabel})`};
+  addLog(`${card.name}: ${labels[prev]} → ${labels[card.state]}.`);
+  buzz(12);
+  render();
 }
 function findUnit(key){
   const owner=findUnitOwner(key);
@@ -1415,11 +1586,14 @@ function bind(){
   document.querySelectorAll("[data-view-army]").forEach(b=>b.onclick=()=>{S.viewingArmy=b.dataset.viewArmy;S.armyFilter="all";render()});
   document.querySelectorAll("[data-open-builder]").forEach(b=>b.onclick=()=>{S.builderModal=true;render()});
   document.querySelectorAll("[data-close-builder]").forEach(b=>b.onclick=()=>{S.builderModal=false;render()});
+  document.querySelectorAll("[data-open-tactical]").forEach(b=>b.onclick=()=>{S.tacticalModal=true;render()});
+  document.querySelectorAll("[data-close-tactical]").forEach(b=>b.onclick=()=>{S.tacticalModal=false;render()});
   document.querySelectorAll("[data-open-mission]").forEach(b=>b.onclick=()=>{S.missionModal=true;render()});
   document.querySelectorAll("[data-close-mission]").forEach(b=>b.onclick=()=>{S.missionModal=false;render()});
   document.querySelectorAll("[data-import-builder]").forEach(b=>b.onclick=()=>importBuilderRoster(b.dataset.importPlayer,b.dataset.importBuilder));
   document.querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>{S.armyFilter=b.dataset.filter;render()});
-  document.querySelectorAll("[data-expand]").forEach(b=>b.onclick=(e)=>{if(e.target.closest("[data-unit-toggle],[data-cycle-loc],[data-model-counter]"))return;const k=b.dataset.expand;S.expanded[k]=!S.expanded[k];render()});
+  document.querySelectorAll("[data-expand]").forEach(b=>b.onclick=(e)=>{if(e.target.closest("[data-unit-toggle],[data-cycle-loc],[data-model-counter],[data-tac-cycle]"))return;const k=b.dataset.expand;S.expanded[k]=!S.expanded[k];render()});
+  document.querySelectorAll("[data-tac-cycle]").forEach(b=>b.onclick=(e)=>{e.stopPropagation();cycleTacticalState(b.dataset.tacCycle,b.dataset.tacPlayer)});
   document.querySelectorAll("[data-cycle-loc]").forEach(b=>b.onclick=(e)=>{e.stopPropagation();cycleUnitLocation(b.dataset.cycleLoc)});
   document.querySelectorAll("[data-unit-toggle]").forEach(b=>b.onclick=(e)=>{e.stopPropagation();const u=findUnit(b.dataset.unitToggle);if(u){u[b.dataset.flag]=!u[b.dataset.flag];addLog(`${u.name} marked ${u[b.dataset.flag]?"":"not "}${b.dataset.flag}.`)}render()});
   document.querySelectorAll("[data-model-counter]").forEach(b=>{
