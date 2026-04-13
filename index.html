@@ -447,7 +447,11 @@ function loadGameState(){
     S.supplyMsg="";
     ["p1","p2"].forEach(id=>{
       const army=saved.armies?.[id];
-      if(army&&Array.isArray(army.units))ARMIES[id]=army;
+      if(army&&Array.isArray(army.units)){
+        army.tactical=Array.isArray(army.tactical)?army.tactical:[];
+        army.tactical.forEach(c=>{if(!c.state)c.state="ready"});
+        ARMIES[id]=army;
+      }
     });
   }catch(e){}
 }
@@ -1281,7 +1285,12 @@ function tacticalBarHtml(){
   const t1=ARMIES.p1?.tactical||[];
   const t2=ARMIES.p2?.tactical||[];
   const total=t1.length+t2.length;
-  if(!total)return "";
+  if(!total)return `<div class="builder-bar" style="opacity:.5">
+    <div style="min-width:0">
+      <div class="builder-title">Tactical Cards</div>
+      <div class="builder-summary">No tactical cards imported. Re-import armies to load them.</div>
+    </div>
+  </div>`;
   const r1=t1.filter(c=>c.state==="ready").length;
   const r2=t2.filter(c=>c.state==="ready").length;
   const pool1=availableResource("p1");
