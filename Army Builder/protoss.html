@@ -2046,6 +2046,13 @@
       save();
       const targetPlayer = player === 'p2' ? 'p2' : 'p1';
       const faction = getCompanionFactionKey();
+      const pending = { faction, player: targetPlayer, ts: Date.now() };
+      try { localStorage.setItem('sc-tmg-companion-pending-import', JSON.stringify(pending)); } catch (e) {}
+      try {
+        const ch = new BroadcastChannel('sc-tmg-companion');
+        ch.postMessage({ type: 'import-roster', ...pending });
+        ch.close();
+      } catch (e) {}
       window.location.href = '../index.html?import=' + encodeURIComponent(faction) + '&player=' + encodeURIComponent(targetPlayer);
     }
 
