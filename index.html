@@ -167,11 +167,6 @@ input,select{font-family:inherit}
 .marker-owner-btns{display:flex;gap:4px;margin-top:8px}
 .marker-owner-btn{flex:1;padding:5px 0;border-radius:var(--rs);border:1px solid var(--border);font-size:10px;transition:all .15s}
 .marker-owner-btn.active{font-weight:600}
-.round-score-strip{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
-.round-score-tile{border:1px solid var(--border);border-radius:var(--rs);background:var(--surfaceAlt);padding:7px 8px;text-align:center;user-select:none;transition:transform .1s}
-.round-score-tile.pressing{transform:scale(.96)}
-.round-score-tile strong{display:block;font-size:16px;font-family:var(--mono);line-height:1;color:var(--accent)}
-.round-score-tile span{display:block;margin-top:3px;color:var(--dim);font-size:8px;text-transform:uppercase;letter-spacing:.05em;font-weight:800;line-height:1.15}
 .ledger-list{max-height:58vh;overflow:auto;padding-right:2px}
 .ledger-entry{padding:9px 0;border-bottom:1px solid rgba(255,255,255,.06)}
 .ledger-head{display:flex;justify-content:space-between;gap:8px;margin-bottom:5px}
@@ -1310,7 +1305,6 @@ function render(){
   const markerScoreDone=markerScore&&S.scoredMarkersByRound?.[missionScoreKey()];
   const vpHint=id=>markerScoreDone?"scored":markerScore?`mission +${markerScore[id]}`:"tap + · hold −";
   const vpHintClass=markerScore?"vp-hint score-ready":"vp-hint";
-  const rs=roundScoring();
 
   document.getElementById("app").innerHTML=`
   <!-- SCOREBAR (sticky) -->
@@ -1391,10 +1385,6 @@ function render(){
     <div class="sec-label" style="margin-bottom:5px">Mission Markers</div>
     ${missionMarkerGridHtml()}
     ${S.mission.editMarker!=null?markerEditorHtml(S.mission.editMarker):""}
-    <div class="round-score-strip">
-      <button class="round-score-tile" data-destroyed-counter="p1"><strong>${rs.destroyedBy.p1}</strong><span>${scoreboardArmyLabel("p1")} enemy<br>supply destroyed</span></button>
-      <button class="round-score-tile" data-destroyed-counter="p2"><strong>${rs.destroyedBy.p2}</strong><span>${scoreboardArmyLabel("p2")} enemy<br>supply destroyed</span></button>
-    </div>
   </div>
   ${missionModalHtml()}
   ${S.supplyMsg?`<div style="padding:4px 12px"><div class="supply-note" style="color:#c96a4a;font-size:10px">${esc(S.supplyMsg)}</div></div>`:""}
@@ -1716,7 +1706,6 @@ function adjustModelCount(key,delta,ms=12){
 }
 const modelTimers={};
 const markerSupplyTimers={};
-const destroyedSupplyTimers={};
 function modelCounterStart(el,key,e){
   e.preventDefault();
   e.stopPropagation();
@@ -1822,32 +1811,6 @@ function markerSupplyEnd(el,num,player,e){
   if(!t.did)adjustMarkerSupply(num,player,1,12);
   delete markerSupplyTimers[key];
 }
-function destroyedSupplyStart(el,player,e){
-  e.preventDefault();
-  e.stopPropagation();
-  clearTimeout(destroyedSupplyTimers[player]?.timer);
-  clearInterval(destroyedSupplyTimers[player]?.interval);
-  destroyedSupplyTimers[player]={did:false};
-  el.classList.add("pressing");
-  destroyedSupplyTimers[player].timer=setTimeout(()=>{
-    destroyedSupplyTimers[player].did=true;
-    adjustDestroyedSupply(player,-1,"manual hold");
-    destroyedSupplyTimers[player].interval=setInterval(()=>adjustDestroyedSupply(player,-1,"manual hold"),260);
-  },600);
-}
-function destroyedSupplyEnd(el,player,e){
-  e.preventDefault();
-  e.stopPropagation();
-  const t=destroyedSupplyTimers[player];
-  if(!t)return;
-  clearTimeout(t.timer);
-  clearInterval(t.interval);
-  el.classList.remove("pressing");
-  if(!t.did)adjustDestroyedSupply(player,1,"manual tap");
-  delete destroyedSupplyTimers[player];
-  render();
-}
-
 function bind(){
   bindTapCounters();
   document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab;render()});
@@ -1887,11 +1850,6 @@ function bind(){
     b.onpointerdown=(e)=>{b.setPointerCapture?.(e.pointerId);markerSupplyStart(b,+b.dataset.markerSupplyCounter,b.dataset.mplayer,e)};
     b.onpointerup=(e)=>markerSupplyEnd(b,+b.dataset.markerSupplyCounter,b.dataset.mplayer,e);
     b.onpointercancel=()=>{const key=`${b.dataset.markerSupplyCounter}-${b.dataset.mplayer}`;clearTimeout(markerSupplyTimers[key]?.timer);clearInterval(markerSupplyTimers[key]?.interval);b.classList.remove("pressing");delete markerSupplyTimers[key]};
-  });
-  document.querySelectorAll("[data-destroyed-counter]").forEach(b=>{
-    b.onpointerdown=(e)=>{b.setPointerCapture?.(e.pointerId);destroyedSupplyStart(b,b.dataset.destroyedCounter,e)};
-    b.onpointerup=(e)=>destroyedSupplyEnd(b,b.dataset.destroyedCounter,e);
-    b.onpointercancel=()=>{const p=b.dataset.destroyedCounter;clearTimeout(destroyedSupplyTimers[p]?.timer);clearInterval(destroyedSupplyTimers[p]?.interval);b.classList.remove("pressing");delete destroyedSupplyTimers[p]};
   });
   document.querySelectorAll("[data-loc]").forEach(b=>b.onclick=(e)=>{e.stopPropagation();setUnitLocation(b.dataset.loc,b.dataset.location)});
   document.querySelectorAll("[data-clear-search]").forEach(b=>b.onclick=()=>{S.search="";render()});
