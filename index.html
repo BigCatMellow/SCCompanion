@@ -50,21 +50,21 @@ input,select{font-family:inherit}
 .phase-open-btn .phase-name{text-decoration:none}
 .phase-open-btn{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .phase-open-tag{padding:2px 7px;border-radius:999px;background:var(--card);border:1px solid var(--border);color:var(--muted);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
-.vp-row{display:grid;grid-template-columns:minmax(44px,1fr) 42px minmax(62px,auto) 24px minmax(62px,auto) 42px minmax(44px,1fr);align-items:center;gap:5px;padding:2px 0}
+.vp-row{display:grid;grid-template-columns:minmax(48px,1fr) 36px minmax(58px,auto) 20px minmax(58px,auto) 36px minmax(48px,1fr);align-items:center;gap:4px;padding:2px 0}
 .score-side{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-width:0}
 .score-side.right{align-items:flex-end;text-align:right}
-.vp-block{text-align:center;min-width:68px;padding:2px 2px;border-radius:var(--r);user-select:none}
+.vp-block{text-align:center;min-width:58px;padding:2px 1px;border-radius:var(--r);user-select:none}
 .vp-score-hit{cursor:pointer;transition:transform .1s;padding:1px 4px;border-radius:var(--rs)}
 .vp-score-hit.pressing{transform:scale(.95)}
-.vp-label{max-width:100%;font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vp-label{max-width:100%;font-size:9px;text-transform:uppercase;letter-spacing:0;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vp-value{font-size:34px;font-weight:900;font-family:var(--mono);line-height:.95}
 .vp-hint{font-size:7px;color:var(--dim);margin-top:2px;opacity:.5;text-transform:uppercase;letter-spacing:.08em}
 .vp-hint.score-ready{opacity:1;font-weight:800;color:var(--accent)}
-.supply-side{text-align:center;min-width:36px;padding:2px 0;border-radius:var(--rs);opacity:.85;justify-self:center}
+.supply-side{text-align:center;min-width:34px;padding:2px 0;border-radius:var(--rs);opacity:.85;justify-self:center}
 .supply-side .supply-num{display:block;font-size:1rem;font-weight:800;font-family:var(--mono);color:var(--sc);line-height:1}
 .supply-side.over .supply-num{color:#ef4444}
 .supply-side .supply-detail{display:block;font-size:0.45rem;color:var(--dim);text-transform:uppercase;letter-spacing:.04em;font-weight:600;margin-top:2px;line-height:1.05}
-.vp-sep{display:flex;flex-direction:column;align-items:center;min-width:24px}
+.vp-sep{display:flex;flex-direction:column;align-items:center;min-width:20px}
 .vp-sep span:first-child{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.15em}
 .vp-sep span:last-child{font-size:11px;color:var(--dim);margin-top:2px}
 .log-open-btn{padding:8px 10px;border-radius:var(--rs);border:1px solid var(--border);background:rgba(255,255,255,.035);color:var(--muted);font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
@@ -1522,51 +1522,48 @@ function tacticalBarHtml(player){
 }
 function tacticalModalHtml(){
   if(!S.tacticalModal)return "";
-  const sections=["p1","p2"].map(player=>{
-    const army=ARMIES[player];
-    const cards=army?.tactical||[];
-    if(!cards.length)return "";
-    const color=army.color||"#7b93a8";
-    const resLabel=factionResourceLabel(player);
-    const resName=factionResourceName(player);
-    const pool=availableResource(player);
-    const total=cards.reduce((s,c)=>s+Number(c.resourceValue||0),0);
-    const readyCount=cards.filter(c=>c.state==="ready").length;
-    return `<div style="margin-bottom:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div>
-          <div class="modal-sub" style="color:${color};font-weight:700;margin:0">${esc(army.label||player.toUpperCase())}</div>
-          <div style="font-size:0.6rem;color:var(--dim);font-weight:500;margin-top:2px">${readyCount}${"/"+ cards.length} ready · ${pool}${"/"+ total} ${resLabel} available</div>
-        </div>
-        <span class="tac-pool-badge" style="background:${alpha(color,.12)};color:${color}">${pool} ${resLabel}</span>
+  const player=S.viewingArmy==="p2"?"p2":"p1";
+  const army=ARMIES[player];
+  const cards=army?.tactical||[];
+  const color=army?.color||"#7b93a8";
+  const resLabel=factionResourceLabel(player);
+  const pool=availableResource(player);
+  const total=cards.reduce((s,c)=>s+Number(c.resourceValue||0),0);
+  const readyCount=cards.filter(c=>c.state==="ready").length;
+  const section=cards.length?`<div style="margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div>
+        <div class="modal-sub" style="color:${color};font-weight:700;margin:0">${esc(army.label||player.toUpperCase())}</div>
+        <div style="font-size:0.6rem;color:var(--dim);font-weight:500;margin-top:2px">${readyCount}${"/"+ cards.length} ready · ${pool}${"/"+ total} ${resLabel} available</div>
       </div>
-      ${cards.map(card=>{
-        const isReady=card.state==="ready";
-        const isAbility=card.state==="ability";
-        const exhausted=!isReady;
-        const stateLabel=isReady?"Ready":isAbility?"Ability":resLabel;
-        const stateClass=isReady?"ready":isAbility?"ability":"resource";
-        const open=!!S.expanded[card.key];
-        const resVal=card.resourceValue?`+${card.resourceValue} ${card.resourceType||resLabel}`:"";
-        return `<div class="tac-card ${exhausted?"exhausted":""}" style="border-left:4px solid ${isReady?color:"var(--dim)"}">
-          <div class="tac-info" ${card.abilities?.length?`data-expand="${card.key}" style="cursor:pointer"`:""}>
-            <div class="tac-name">${esc(card.name)}</div>
-            <div class="tac-meta">${resVal}${card.slots?.length?` · ${card.slots.join(", ")}`:""}</div>
-          </div>
-          <button class="tac-state-btn ${stateClass}" data-tac-cycle="${card.key}" data-tac-player="${player}">${stateLabel}</button>
-          ${card.abilities?.length?`<span class="unit-chevron ${open?"open":""}" data-expand="${card.key}" style="cursor:pointer">›</span>`:""}
+      <span class="tac-pool-badge" style="background:${alpha(color,.12)};color:${color}">${pool} ${resLabel}</span>
+    </div>
+    ${cards.map(card=>{
+      const isReady=card.state==="ready";
+      const isAbility=card.state==="ability";
+      const exhausted=!isReady;
+      const stateLabel=isReady?"Ready":isAbility?"Ability":resLabel;
+      const stateClass=isReady?"ready":isAbility?"ability":"resource";
+      const open=!!S.expanded[card.key];
+      const resVal=card.resourceValue?`+${card.resourceValue} ${card.resourceType||resLabel}`:"";
+      return `<div class="tac-card ${exhausted?"exhausted":""}" style="border-left:4px solid ${isReady?color:"var(--dim)"}">
+        <div class="tac-info" ${card.abilities?.length?`data-expand="${card.key}" style="cursor:pointer"`:""}>
+          <div class="tac-name">${esc(card.name)}</div>
+          <div class="tac-meta">${resVal}${card.slots?.length?` · ${card.slots.join(", ")}`:""}</div>
         </div>
-        ${open&&card.abilities?.length?`<div class="tac-expand">${abilityListHtml("Card Abilities",card.abilities)}</div>`:""}`;
-      }).join("")}
-    </div>`;
-  }).join("");
+        <button class="tac-state-btn ${stateClass}" data-tac-cycle="${card.key}" data-tac-player="${player}">${stateLabel}</button>
+        ${card.abilities?.length?`<span class="unit-chevron ${open?"open":""}" data-expand="${card.key}" style="cursor:pointer">›</span>`:""}
+      </div>
+      ${open&&card.abilities?.length?`<div class="tac-expand">${abilityListHtml("Card Abilities",card.abilities)}</div>`:""}`;
+    }).join("")}
+  </div>`:"";
   return `<div class="modal-backdrop" data-close-tactical></div>
   <div class="modal-panel" style="max-height:80vh;overflow-y:auto">
     <div class="modal-head">
-      <div><div class="modal-title">Tactical Cards</div><div class="modal-sub">Tap a card's state to cycle: Ready → Ability → Resource → Ready. Cards refresh each round.</div></div>
+      <div><div class="modal-title">Tactical Cards</div><div class="modal-sub">${esc(army?.label||player.toUpperCase())} only · tap a card's state to cycle: Ready → Ability → Resource → Ready.</div></div>
       <button class="modal-close" data-close-tactical>×</button>
     </div>
-    ${sections||'<div class="empty-msg">No tactical cards imported. Import armies from the builder first.</div>'}
+    ${section||`<div class="empty-msg">No tactical cards imported for ${esc(army?.label||player.toUpperCase())}. Import this roster from the builder first.</div>`}
   </div>`;
 }
 function unitCardHtml(u){
